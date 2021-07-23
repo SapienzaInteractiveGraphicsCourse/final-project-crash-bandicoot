@@ -73,34 +73,34 @@ class GameManager {
         const loader = new THREE.TextureLoader();
 
         let akuakuTexture = [
-            new THREE.MeshPhongMaterial({ map: loader.load("./textures/crates/akuaku.jpg") }),
-            new THREE.MeshPhongMaterial({ map: loader.load("./textures/crates/akuaku.jpg") }),
-            new THREE.MeshPhongMaterial({ map: loader.load("./textures/crates/standard.jpg") }),
-            new THREE.MeshPhongMaterial({ map: loader.load("./textures/crates/akuaku.jpg") }),
-            new THREE.MeshPhongMaterial({ map: loader.load("./textures/crates/akuaku.jpg") }),
-            new THREE.MeshPhongMaterial({ map: loader.load("./textures/crates/akuaku.jpg") }),
+            new THREE.MeshPhongMaterial({ map: loader.load("./final-project-crash-bandicoot/textures/crates/akuaku.jpg") }),
+            new THREE.MeshPhongMaterial({ map: loader.load("./final-project-crash-bandicoot/textures/crates/akuaku.jpg") }),
+            new THREE.MeshPhongMaterial({ map: loader.load("./final-project-crash-bandicoot/textures/crates/standard.jpg") }),
+            new THREE.MeshPhongMaterial({ map: loader.load("./final-project-crash-bandicoot/textures/crates/akuaku.jpg") }),
+            new THREE.MeshPhongMaterial({ map: loader.load("./final-project-crash-bandicoot/textures/crates/akuaku.jpg") }),
+            new THREE.MeshPhongMaterial({ map: loader.load("./final-project-crash-bandicoot/textures/crates/akuaku.jpg") }),
         ];
 
         let nitroTexture = [
-            new THREE.MeshPhongMaterial({ map: loader.load("./textures/crates/nitro.jpg"), emissive: 0x6f710, emissiveIntensity: 0.4 }),
-            new THREE.MeshPhongMaterial({ map: loader.load("./textures/crates/nitro.jpg"), emissive: 0x6f710, emissiveIntensity: 0.4 }),
-            new THREE.MeshPhongMaterial({ map: loader.load("./textures/crates/nitro_upper.jpg"), emissive: 0x6f710, emissiveIntensity: 0.4 }),
-            new THREE.MeshPhongMaterial({ map: loader.load("./textures/crates/nitro.jpg"), emissive: 0x6f710, emissiveIntensity: 0.4 }),
-            new THREE.MeshPhongMaterial({ map: loader.load("./textures/crates/nitro.jpg"), emissive: 0x6f710, emissiveIntensity: 0.4 }),
-            new THREE.MeshPhongMaterial({ map: loader.load("./textures/crates/nitro.jpg"), emissive: 0x6f710, emissiveIntensity: 0.4 }),
+            new THREE.MeshPhongMaterial({ map: loader.load("./final-project-crash-bandicoot/textures/crates/nitro.jpg"), emissive: 0x6f710, emissiveIntensity: 0.4 }),
+            new THREE.MeshPhongMaterial({ map: loader.load("./final-project-crash-bandicoot/textures/crates/nitro.jpg"), emissive: 0x6f710, emissiveIntensity: 0.4 }),
+            new THREE.MeshPhongMaterial({ map: loader.load("./final-project-crash-bandicoot/textures/crates/nitro_upper.jpg"), emissive: 0x6f710, emissiveIntensity: 0.4 }),
+            new THREE.MeshPhongMaterial({ map: loader.load("./final-project-crash-bandicoot/textures/crates/nitro.jpg"), emissive: 0x6f710, emissiveIntensity: 0.4 }),
+            new THREE.MeshPhongMaterial({ map: loader.load("./final-project-crash-bandicoot/textures/crates/nitro.jpg"), emissive: 0x6f710, emissiveIntensity: 0.4 }),
+            new THREE.MeshPhongMaterial({ map: loader.load("./final-project-crash-bandicoot/textures/crates/nitro.jpg"), emissive: 0x6f710, emissiveIntensity: 0.4 }),
         ];
 
         let checkpointTexture = [
-            new THREE.MeshPhongMaterial({ map: loader.load("./textures/crates/checkpoint.jpg") }),
-            new THREE.MeshPhongMaterial({ map: loader.load("./textures/crates/checkpoint.jpg") }),
-            new THREE.MeshPhongMaterial({ map: loader.load("./textures/crates/checkpoint.jpg") }),
-            new THREE.MeshPhongMaterial({ map: loader.load("./textures/crates/checkpoint.jpg") }),
-            new THREE.MeshPhongMaterial({ map: loader.load("./textures/crates/checkpoint.jpg") }),
-            new THREE.MeshPhongMaterial({ map: loader.load("./textures/crates/checkpoint.jpg") }),
+            new THREE.MeshPhongMaterial({ map: loader.load("./final-project-crash-bandicoot/textures/crates/checkpoint.jpg") }),
+            new THREE.MeshPhongMaterial({ map: loader.load("./final-project-crash-bandicoot/textures/crates/checkpoint.jpg") }),
+            new THREE.MeshPhongMaterial({ map: loader.load("./final-project-crash-bandicoot/textures/crates/checkpoint.jpg") }),
+            new THREE.MeshPhongMaterial({ map: loader.load("./final-project-crash-bandicoot/textures/crates/checkpoint.jpg") }),
+            new THREE.MeshPhongMaterial({ map: loader.load("./final-project-crash-bandicoot/textures/crates/checkpoint.jpg") }),
+            new THREE.MeshPhongMaterial({ map: loader.load("./final-project-crash-bandicoot/textures/crates/checkpoint.jpg") }),
         ];
 
         let crateTexture = new THREE.MeshPhongMaterial({
-            map: loader.load("./textures/crates/standard.jpg")
+            map: loader.load("./final-project-crash-bandicoot/textures/crates/standard.jpg")
         });
 
         crateTextures =
@@ -109,41 +109,41 @@ class GameManager {
 
         let ground = new THREE.MeshPhongMaterial({
             depthTest: true,
-            map: loader.load("./textures/bricks/color.jpg"),
-            normalMap: loader.load("./textures/bricks/normal.png"),
-            aoMap: loader.load("./textures/bricks/ao.jpg"),
+            map: loader.load("./final-project-crash-bandicoot/textures/bricks/color.jpg"),
+            normalMap: loader.load("./final-project-crash-bandicoot/textures/bricks/normal.png"),
+            aoMap: loader.load("./final-project-crash-bandicoot/textures/bricks/ao.jpg"),
         })
 
         let cylinder = new THREE.MeshPhongMaterial({
             depthTest: true,
-            map: loader.load("./textures/cylinder/color.jpg"),
-            normalMap: loader.load("./textures/cylinder/normal.jpg"),
-            aoMap: loader.load("./textures/cylinder/ao.jpg")
+            map: loader.load("./final-project-crash-bandicoot/textures/cylinder/color.jpg"),
+            normalMap: loader.load("./final-project-crash-bandicoot/textures/cylinder/normal.jpg"),
+            aoMap: loader.load("./final-project-crash-bandicoot/textures/cylinder/ao.jpg")
         })
 
         let wall = new THREE.MeshPhongMaterial({
             depthTest: true,
-            map: loader.load("./textures/ancient_wall/color.png", function (texture) {
+            map: loader.load("./final-project-crash-bandicoot/textures/ancient_wall/color.png", function (texture) {
                 texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
                 texture.offset.set(0, 0);
                 texture.repeat.set(35, 35);
             }),
-            normalMap: loader.load("./textures/ancient_wall/normal.png", function (texture) {
+            normalMap: loader.load("./final-project-crash-bandicoot/textures/ancient_wall/normal.png", function (texture) {
                 texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
                 texture.offset.set(0, 0);
                 texture.repeat.set(35, 35);
             }),
-            aoMap: loader.load("./textures/ancient_wall/ao.png", function (texture) {
+            aoMap: loader.load("./final-project-crash-bandicoot/textures/ancient_wall/ao.png", function (texture) {
                 texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
                 texture.offset.set(0, 0);
                 texture.repeat.set(35, 35);
             }),
-            displacementMap: loader.load("./textures/ancient_wall/displacement.png", function (texture) {
+            displacementMap: loader.load("./final-project-crash-bandicoot/textures/ancient_wall/displacement.png", function (texture) {
                 texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
                 texture.offset.set(0, 0);
                 texture.repeat.set(35, 35);
             }),
-            metallicMap: loader.load("./textures/ancient_wall/metallic.png", function (texture) {
+            metallicMap: loader.load("./final-project-crash-bandicoot/textures/ancient_wall/metallic.png", function (texture) {
                 texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
                 texture.offset.set(0, 0);
                 texture.repeat.set(35, 35);
@@ -161,27 +161,27 @@ class GameManager {
     }
 
     setupAudio() {
-        sounds.spinSound = new Audio("./sounds/spinSound.wav");
+        sounds.spinSound = new Audio("./final-project-crash-bandicoot/sounds/spinSound.wav");
         sounds.spinSound.volume -= 0.5
 
-        let music = new Audio("./sounds/templeruins.ogg");
+        let music = new Audio("./final-project-crash-bandicoot/sounds/templeruins.ogg");
         music.volume -= 0.6;
 
         music.play();
-        sounds.wumpaSound = new Audio("./sounds/wumpaIn.wav");
-        sounds.wumpaSoundOut = new Audio("./sounds/wumpaOut.wav");
+        sounds.wumpaSound = new Audio("./final-project-crash-bandicoot/sounds/wumpaIn.wav");
+        sounds.wumpaSoundOut = new Audio("./final-project-crash-bandicoot/sounds/wumpaOut.wav");
 
-        sounds.createBreakSound = new Audio("./sounds/createBreak.wav");
+        sounds.createBreakSound = new Audio("./final-project-crash-bandicoot/sounds/createBreak.wav");
         sounds.createBreakSound.volume -= 0.2
 
-        sounds.akuakuSound = new Audio("./sounds/akuaku.wav");
-        sounds.akuakuDeathSound = new Audio("./sounds/akuaku_vanish.wav");
+        sounds.akuakuSound = new Audio("./final-project-crash-bandicoot/sounds/akuaku.wav");
+        sounds.akuakuDeathSound = new Audio("./final-project-crash-bandicoot/sounds/akuaku_vanish.wav");
 
-        sounds.slideSound = new Audio("./sounds/slide.wav");
+        sounds.slideSound = new Audio("./final-project-crash-bandicoot/sounds/slide.wav");
         sounds.slideSound.volume -= 0.5
-        sounds.nitroSound = new Audio("./sounds/nitro.wav");
-        sounds.woahSound = new Audio("./sounds/woah.wav");
-        sounds.checkpointSound = new Audio("./sounds/checkpoint2.wav");
+        sounds.nitroSound = new Audio("./final-project-crash-bandicoot/sounds/nitro.wav");
+        sounds.woahSound = new Audio("./final-project-crash-bandicoot/sounds/woah.wav");
+        sounds.checkpointSound = new Audio("./final-project-crash-bandicoot/sounds/checkpoint2.wav");
         sounds.checkpointSound.volume -= 0.6
 
         this.audioReady = true;
@@ -274,7 +274,7 @@ class StatsUI {
 
 
         const loader = new THREE.TextureLoader();
-        loader.load("./textures/crashFace.png", function (texture) {
+        loader.load("./final-project-crash-bandicoot/textures/crashFace.png", function (texture) {
             const livesMaterial = new THREE.SpriteMaterial({ map: texture });
             const livesSprite = new THREE.Sprite(livesMaterial);
             livesSprite.scale.set(texture.image.width * 0.5, texture.image.height * 0.5, 1);
