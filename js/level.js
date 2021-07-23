@@ -101,10 +101,17 @@ export const ground = [
     },
 ]
 
+
+export const winPlatform = {
+    pos: {x:-250, y: 290, z: 708},
+    scale: { x: 7, y: 15, z: 7 },
+    quat: { x: 0, y: 0, z: 0, w: 1 }
+}
+
 export const movingPlaftorms =
     [
        { x: -25, y: 8.5, z: 690, to: 300 },
-       { x: -250, y: 310, z: 708, to: 8 },
+      // { x: -250, y: 310, z: 708, to: 8 },
     ]
 
 

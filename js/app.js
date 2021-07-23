@@ -66,16 +66,60 @@ class GameManager {
     }
 
     showLoading() {
-
+        new TWEEN.Tween({ opacity: 0 })
+            .to({ opacity: 1 }, 1000)
+            .onUpdate(function (object) { 
+                document.getElementById("loadingScreen").style.opacity = object.opacity 
+            })
+            .easing(TWEEN.Easing.Quadratic.InOut)
+            .start();
     }
 
     hideLoading() {
         new TWEEN.Tween({ opacity: 1 })
             .to({ opacity: 0 }, 1000)
-            .onUpdate(function (object) { document.getElementById("loadingScreen").style.opacity = object.opacity })
+            .onUpdate(function (object) { 
+                document.getElementById("loadingScreen").style.opacity = object.opacity 
+            })
             .easing(TWEEN.Easing.Quadratic.InOut)
             .start();
     }
+
+    showGameOver() {
+        document.getElementById("gameOver").style.zIndex = 4
+        new TWEEN.Tween({ opacity: 0, transform: 100 })
+            .to({ opacity: 1, transform: 0 }, 1000)
+            .onUpdate(function (object) { 
+                document.getElementById("gameOver").style.opacity = object.opacity 
+                document.getElementById("gameOver").style.transform = `translateY(${object.transform}%)`
+
+            })
+            .easing(TWEEN.Easing.Quadratic.InOut)
+            .start();
+    }
+
+
+    win() {
+        if (!alive) {return}
+        alive = false;
+        document.getElementById("gameWin").style.zIndex = 4
+
+        sounds.music.pause();
+        sounds.music.currentTime = 0;
+
+        new TWEEN.Tween({ opacity: 0, transform: 100 })
+        .to({ opacity: 1, transform: 0 }, 1000)
+            .onUpdate(function (object) { 
+                document.getElementById("gameWin").style.opacity = object.opacity 
+                document.getElementById("gameWin").style.transform = `translateY(${object.transform}%)`
+            })
+            .easing(TWEEN.Easing.Quadratic.InOut)
+            .start();
+        if (statsUI.crates >= LEVEL.crates.length){
+            document.getElementById("gem").style.display = "inline"
+        } 
+    }
+
 
     gameReady() {
         return (this.textureReady && this.audioReady && this.physicsReady)
@@ -235,12 +279,12 @@ class GameManager {
             gameManager.modelsLoaded++
             waitForLoading();
 
-            
+
         }, undefined, function (error) {
             console.error(error);
         });
 
-        
+
     }
 
 
@@ -306,10 +350,10 @@ class StatsUI {
         wumpaContainer.name = "wumpaContainer"
         sceneOrtho.add(wumpaContainer)
 
-  
+
         sceneOrtho.getObjectByName("wumpaContainer").add(models.wumpaOrtho)
 
-  
+
 
         document.getElementById('wumpaCounter').innerHTML = 0;
 
@@ -399,7 +443,12 @@ class StatsUI {
         } else {
             this.lives++;
         }
+
+
         document.getElementById('livesCounter').innerHTML = this.lives;
+
+
+
     }
 }
 
@@ -555,10 +604,10 @@ class PlayerController {
 
     die() {
         if (!alive) return;
+        alive = false;
 
         animator.death()
         sounds.woahSound.play();
-        alive = false;
         isMoving = false;
         this.akuaku = false
         this.threeAkuaku.visible = false;
@@ -567,15 +616,22 @@ class PlayerController {
         this.threeCrash.userData.physicsBody.getLinearVelocity().setY(0)
         this.threeCrash.userData.physicsBody.getLinearVelocity().setZ(0)
 
+        if (statsUI.lives == 0) {
+            sounds.music.pause();
+            sounds.music.currentTime = 0;
+            gameManager.showGameOver();
+        }
+
         setTimeout(function () {
-            playerController.respawn()
             statsUI.updateLivesCounter(true)
+            playerController.respawn()
         }, 2000);
     }
 
 
     respawn() {
         isGrounded = false;
+        animator.jump(true)
         this.threeCrash.userData.physicsBody.getLinearVelocity().setX(0)
         this.threeCrash.userData.physicsBody.getLinearVelocity().setY(0)
         this.threeCrash.userData.physicsBody.getLinearVelocity().setZ(0)
@@ -685,7 +741,8 @@ class Animator {
         this.idleAnimation = null;
         this.slideAnimation = null;
         this.deathAnimation = null;
-
+        this.winAnimation = null;
+        
         this.animPlaying = {
             idle: false,
             spin: false,
@@ -901,6 +958,25 @@ class Animator {
 
         this.deathAnimation = deathFalling;
 
+        // Win animation
+        startingFrame = { scaleX: playerController.threeCrash.scale.x, scaleY: playerController.threeCrash.scale.y, scaleZ: playerController.threeCrash.scale.z }
+        let middleFrame = {scaleX: startingFrame.scaleX+.5, scaleY: startingFrame.scaleY+.5, scaleZ: startingFrame.scaleZ+.5 }
+
+        let winAnimationStart = new TWEEN.Tween(startingFrame).to(middleFrame, 100)
+        .easing(TWEEN.Easing.Quadratic.InOut)
+        .onUpdate(function(object){
+            playerController.threeCrash.scale.set(object.scaleX, object.scaleY, object.scaleZ)
+        })
+
+        let winAnimationEnd =  new TWEEN.Tween(middleFrame).to({scaleX:0, scaleY:0, scaleZ: 0}, 500)
+        .easing(TWEEN.Easing.Quadratic.InOut)
+        .onUpdate(function(object){
+            playerController.threeCrash.scale.set(object.scaleX, object.scaleY, object.scaleZ)
+        })
+        winAnimationStart.chain(winAnimationEnd)
+
+        this.winAnimation = winAnimationStart
+
     }
 
 
@@ -1022,6 +1098,17 @@ class Animator {
         this.idleAnimation.stop();
         this.slideAnimation.stop();
         this.deathAnimation.start();
+    }
+
+    win() {
+        this.walkingAnimation.stop();
+        this.jumpAnimation.stop();
+        this.groundAnimation.stop();
+        this.spinAnimation.stop();
+        this.idleAnimation.stop();
+        this.slideAnimation.stop();  
+        if (alive)
+        this.winAnimation.start();
     }
 
 }
@@ -1263,7 +1350,7 @@ class WumpaCollectable extends Collectable {
 
 
         wumpaMesh.name = "wumpaMesh";
-       
+
         let wumpaModel = models.wumpa.clone()
         WumpaCollectable.animate(wumpaModel)
         wumpaMesh.add(wumpaModel);
@@ -1389,7 +1476,7 @@ const playerController = new PlayerController()
 const animator = new Animator()
 const statsUI = new StatsUI();
 const gameManager = new GameManager();
- 
+
 
 function start() {
 
@@ -1405,8 +1492,7 @@ function start() {
 
 }
 
-function waitForLoading()
-{
+function waitForLoading() {
     if (gameManager.gameReady() && gameManager.modelsReady()) {
         gameManager.hideLoading();
         main();
@@ -1560,7 +1646,7 @@ function main() {
 
     for (let i = 0; i < 100; i++) {
         let pos = { x: -4 * i - Math.sin(2 * Math.PI * i * 5), y: 7 + Math.cos(2 * Math.PI * i * 0.1), z: 300 };
-    //    WumpaCollectable.instantiate(scene, physicsWorld, pos);
+        //    WumpaCollectable.instantiate(scene, physicsWorld, pos);
     }
 
     rigidBodies.push(CrateManager.instantiate(scene, physicsWorld, { x: 5, y: 4, z: 300 }, crateTypes.checkpoint))
@@ -1614,6 +1700,10 @@ function main() {
         createGround(LEVEL.ground[i])
     }
 
+    // Create win platform
+    createGround(LEVEL.winPlatform).userData.tag = "win"
+
+
     for (let i = 0; i < LEVEL.fallingCylinders.length; i++) {
         createFallingCylinder(LEVEL.fallingCylinders[i])
     }
@@ -1632,7 +1722,7 @@ function main() {
     groundMesh.position.set(-125, 300, 735)
     scene.add(groundMesh);
 
- 
+
     function render() {
         const deltaTime = clock.getDelta();
         const time = clock.getElapsedTime();
@@ -1854,15 +1944,8 @@ function createGround(info) {
 
     //threeJS Section
 
-
-
-
-
     let blockPlane = new THREE.Mesh(new THREE.BoxBufferGeometry(
         scale.x, scale.y, scale.z, 35, 35, 35), levelTextures.ground);
-
-
-
 
     blockPlane.position.set(pos.x, pos.y, pos.z);
     blockPlane.quaternion.set(quat.x, quat.y, quat.z, quat.w);
@@ -1893,6 +1976,9 @@ function createGround(info) {
     body.threeObject = blockPlane;
 
     physicsWorld.addRigidBody(body);
+
+
+    return blockPlane
 }
 
 
@@ -2171,6 +2257,12 @@ class CollisionManager {
                 }
                 else {
                     let tag = threeObject1.userData.tag;
+                    if (tag === "win") {
+                        animator.win();
+                        gameManager.win();
+                    }
+
+
                     if (tag === "ground") {
                         isGrounded = true;
                     }
@@ -2236,9 +2328,7 @@ class CollisionManager {
 
 
 
-
 let isGrounded = true;
-let onPlatform = false;
 let canJump = true
 let onTimeout = false
 
@@ -2284,7 +2374,8 @@ function handleInput(inputCode, inputKeys) {
             }
         }
         else if (inputCode.code === "KeyC") {
-            crateEditor()
+            animator.win()
+            //crateEditor()
         }
 
 
@@ -2312,26 +2403,9 @@ function handleInput(inputCode, inputKeys) {
 }
 
 
-function movingPressed() {
-    return !(inputAxis.moveVertical == 0 && inputAxis.moveNegVertical == 0 && inputAxis.moveNegHorizontal == 0 && inputAxis.moveHorizontal == 0)
-}
-
-
-
-
-
-class Camera {
-    constructor() { }
-
-
-}
-
-
-
 function getCameraHeigth(player) {
 
     const startZ = curve.getPointAt(0).z
-    const endZ = curve.getPointAt(1).z
 
     const playerZ = player.position.z
 
@@ -2371,7 +2445,6 @@ function getForwardVector(player) {
     const playerZ = player.position.z - 10
 
     const length = curve.getLength();
-    // oppure length = startZ-endZ
 
     const currentHeigth = (playerZ - startZ) / length;
 
