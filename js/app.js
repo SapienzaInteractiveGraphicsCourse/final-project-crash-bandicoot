@@ -223,7 +223,7 @@ class StatsUI {
         wumpaContainer.name = "wumpaContainer"
         sceneOrtho.add(wumpaContainer)
 
-        gltfLoader.load('../models/wumpa/scene.gltf', function (gltf) {
+        gltfLoader.load('./final-project-crash-bandicoot/wumpa/scene.gltf', function (gltf) {
 
             let wumpaModel = gltf.scene
             wumpaModel.position.set(0, 0, 0)
@@ -394,7 +394,7 @@ class PlayerController {
         scene.add(cameraPersp);
 
 
-        gltfLoader.load('../models/crash/crashRollFix.glb', function (gltf) {
+        gltfLoader.load('./final-project-crash-bandicoot/crash/crashRollFix.glb', function (gltf) {
 
             let crashModel = gltf.scene.getObjectByName("Crash")
             playerController.bones = crashModel.getObjectByName("TorsoMain")
@@ -471,7 +471,7 @@ class PlayerController {
 
         const akuAku = new THREE.Object3D();
 
-        gltfLoader.load('../models/akuaku/scene.gltf', function (gltf) {
+        gltfLoader.load('./final-project-crash-bandicoot/akuaku/scene.gltf', function (gltf) {
 
             let akuakuModel = gltf.scene
             //crashModel.position.y = -3
@@ -1210,7 +1210,7 @@ class WumpaCollectable extends Collectable {
 
         wumpaMesh.name = "wumpaMesh";
 
-        gltfLoader.load('../models/wumpa/scene.gltf', function (gltf) {
+        gltfLoader.load('./final-project-crash-bandicoot/wumpa/scene.gltf', function (gltf) {
 
             let wumpaModel = gltf.scene
             wumpaModel.castShadow = true;
