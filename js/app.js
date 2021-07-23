@@ -82,7 +82,7 @@ class GameManager {
     }
 
     modelsReady() {
-        return this.modelsLoaded == 1
+        return this.modelsLoaded == 3
     }
 
     initMaterials() {
@@ -216,6 +216,7 @@ class GameManager {
             wumpaModel.name = "wumpaIcon"
 
             models.wumpaOrtho = wumpaModel
+            gameManager.modelsLoaded++
             waitForLoading();
 
 
@@ -231,7 +232,7 @@ class GameManager {
             wumpaModel.castShadow = true;
             wumpaModel.scale.set(.25, .25, .25);
             models.wumpa = wumpaModel
-
+            gameManager.modelsLoaded++
             waitForLoading();
 
             
@@ -1406,9 +1407,9 @@ function start() {
 
 function waitForLoading()
 {
-    if (gameManager.modelsReady()) {
-        gameManager.hideLoading()
-        main()
+    if (gameManager.gameReady() && gameManager.modelsReady()) {
+        gameManager.hideLoading();
+        main();
     }
 }
 
