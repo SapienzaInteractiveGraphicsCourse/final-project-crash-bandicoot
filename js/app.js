@@ -50,6 +50,7 @@ const crateTypes = { akuaku: "akuaku", wumpa: "wumpa", tnt: "tnt", nitro: "nitro
 
 let crateTextures = {};
 let levelTextures = {};
+let models = {}
 
 const sounds = {}
 
@@ -61,16 +62,33 @@ class GameManager {
         this.textureReady = false;
         this.audioReady = false;
         this.physicsReady = false;
+        this.modelsLoaded = 0
+    }
+
+    showLoading() {
+
+    }
+
+    hideLoading() {
+        new TWEEN.Tween({ opacity: 1 })
+            .to({ opacity: 0 }, 1000)
+            .onUpdate(function (object) { document.getElementById("loadingScreen").style.opacity = object.opacity })
+            .easing(TWEEN.Easing.Quadratic.InOut)
+            .start();
     }
 
     gameReady() {
         return (this.textureReady && this.audioReady && this.physicsReady)
     }
 
+    modelsReady() {
+        return this.modelsLoaded == 1
+    }
 
-    initTextures() {
+    initMaterials() {
 
         const loader = new THREE.TextureLoader();
+
 
         let akuakuTexture = [
             new THREE.MeshPhongMaterial({ map: loader.load("./textures/crates/akuaku.jpg") }),
@@ -160,14 +178,78 @@ class GameManager {
         this.textureReady = true;
     }
 
+    initModels() {
+        gltfLoader.load('./models/crash/crashRollFix.glb', function (gltf) {
+            console.log("loadingModels")
+
+            let crashModel = gltf.scene.getObjectByName("Crash")
+            let bones = crashModel.getObjectByName("TorsoMain")
+            console.log("bones loaded")
+            crashModel.position.y = -3
+            crashModel.castShadow = true;
+            crashModel.receiveShadow = true;
+
+            models.crash = crashModel
+            models.crashBones = bones
+
+            gameManager.modelsLoaded++
+            waitForLoading();
+
+        }, undefined, function (error) {
+            console.error(error);
+        });
+
+
+        gltfLoader.load('./models/wumpa/scene.gltf', function (gltf) {
+
+            let wumpaModel = gltf.scene
+            wumpaModel.position.set(0, 0, 0)
+            wumpaModel.castShadow = false;
+            wumpaModel.scale.set(10, 10, 10);
+
+            new TWEEN.Tween({ rotY: 0 })
+                .to({ rotY: 2 * Math.PI }, 1000)
+                .onUpdate(function (object, elapsed) { wumpaModel.rotation.set(wumpaModel.rotation.x, -object.rotY, wumpaModel.rotation.z); })
+                .repeat(Infinity)
+                .start();
+
+            wumpaModel.name = "wumpaIcon"
+
+            models.wumpaOrtho = wumpaModel
+            waitForLoading();
+
+
+        }, undefined, function (error) {
+            console.log("error")
+            console.error(error);
+
+        });
+
+        gltfLoader.load('./models/wumpa/scene.gltf', function (gltf) {
+
+            let wumpaModel = gltf.scene
+            wumpaModel.castShadow = true;
+            wumpaModel.scale.set(.25, .25, .25);
+            models.wumpa = wumpaModel
+
+            waitForLoading();
+
+            
+        }, undefined, function (error) {
+            console.error(error);
+        });
+
+        
+    }
+
+
     setupAudio() {
         sounds.spinSound = new Audio("./sounds/spinSound.wav");
         sounds.spinSound.volume -= 0.5
 
-        let music = new Audio("./sounds/templeruins.ogg");
-        music.volume -= 0.6;
+        sounds.music = new Audio("./sounds/templeruins.ogg");
+        sounds.music.volume -= 0.6;
 
-        music.play();
         sounds.wumpaSound = new Audio("./sounds/wumpaIn.wav");
         sounds.wumpaSoundOut = new Audio("./sounds/wumpaOut.wav");
 
@@ -223,27 +305,10 @@ class StatsUI {
         wumpaContainer.name = "wumpaContainer"
         sceneOrtho.add(wumpaContainer)
 
-        gltfLoader.load('./final-project-crash-bandicoot/wumpa/scene.gltf', function (gltf) {
+  
+        sceneOrtho.getObjectByName("wumpaContainer").add(models.wumpaOrtho)
 
-            let wumpaModel = gltf.scene
-            wumpaModel.position.set(0, 0, 0)
-            wumpaModel.castShadow = false;
-            wumpaModel.scale.set(10, 10, 10);
-
-            new TWEEN.Tween({ rotY: 0 })
-                .to({ rotY: 2 * Math.PI }, 1000)
-                .onUpdate(function (object, elapsed) { wumpaModel.rotation.set(wumpaModel.rotation.x, -object.rotY, wumpaModel.rotation.z); })
-                .repeat(Infinity)
-                .start();
-
-            wumpaModel.name = "wumpaIcon"
-            sceneOrtho.getObjectByName("wumpaContainer").add(wumpaModel)
-
-        }, undefined, function (error) {
-            console.log("error")
-            console.error(error);
-
-        });
+  
 
         document.getElementById('wumpaCounter').innerHTML = 0;
 
@@ -352,17 +417,18 @@ class PlayerController {
         this.bones = null;
 
         this.jumpSpeed = 5;
+
+        this.modelsLoaded = 0
     }
 
 
     isReady() {
         return (this.bones != null)
     }
-    
 
     instantiate() {
 
-        let pos = { x: 0, y: 20, z: 0 };
+        let pos = { x: 0, y: 10, z: 0 };
         let quat = { x: 0, y: 0, z: 0, w: 1 };
         let mass = 55;
 
@@ -394,20 +460,8 @@ class PlayerController {
         scene.add(cameraPersp);
 
 
-        gltfLoader.load('../final-project-crash-bandicoot/models/crash/crashRollFix.glb', function (gltf) {
-
-            let crashModel = gltf.scene.getObjectByName("Crash")
-            playerController.bones = crashModel.getObjectByName("TorsoMain")
-            console.log("bones loaded")
-            crashModel.position.y = -3
-            crashModel.castShadow = true;
-            crashModel.receiveShadow = true;
-            playerMesh.add(crashModel)
-
-        }, undefined, function (error) {
-            console.error(error);
-        });
-
+        playerMesh.add(models.crash)
+        this.bones = models.crashBones
 
         //Ammojs Section
         let transform = new Ammo.btTransform();
@@ -471,7 +525,7 @@ class PlayerController {
 
         const akuAku = new THREE.Object3D();
 
-        gltfLoader.load('../final-project-crash-bandicoot/models/akuaku/scene.gltf', function (gltf) {
+        gltfLoader.load('./models/akuaku/scene.gltf', function (gltf) {
 
             let akuakuModel = gltf.scene
             //crashModel.position.y = -3
@@ -1204,24 +1258,14 @@ class WumpaCollectable extends Collectable {
         let mass = 0;
 
         const wumpaObject = new THREE.Object3D();
-
         const wumpaMesh = new THREE.Object3D();
 
 
         wumpaMesh.name = "wumpaMesh";
-
-        gltfLoader.load('../final-project-crash-bandicoot/models/wumpa/scene.gltf', function (gltf) {
-
-            let wumpaModel = gltf.scene
-            wumpaModel.castShadow = true;
-            wumpaModel.scale.set(.25, .25, .25);
-            wumpaMesh.add(wumpaModel);
-            WumpaCollectable.animate(wumpaModel)
-
-        }, undefined, function (error) {
-            console.error(error);
-        });
-
+       
+        let wumpaModel = models.wumpa.clone()
+        WumpaCollectable.animate(wumpaModel)
+        wumpaMesh.add(wumpaModel);
         wumpaObject.add(wumpaMesh);
         scene.add(wumpaObject);
 
@@ -1343,25 +1387,33 @@ class AkuAkuCollectable extends Collectable {
 const playerController = new PlayerController()
 const animator = new Animator()
 const statsUI = new StatsUI();
-
+const gameManager = new GameManager();
+ 
 
 function start() {
-    const gameManager = new GameManager();
 
     tmpTrans = new Ammo.btTransform();
 
-    gameManager.initTextures();
+    gameManager.initMaterials();
     gameManager.setupAudio();
     gameManager.setupPhysicsWorld();
 
+    gameManager.initModels()
+
     CollisionManager.setupContactResultCallback();
 
-    while (!gameManager.gameReady()) { continue }
-    main();
 }
 
+function waitForLoading()
+{
+    if (gameManager.modelsReady()) {
+        gameManager.hideLoading()
+        main()
+    }
+}
 
 function main() {
+
     const canvas = document.querySelector('#three-canvas');
     const renderer = new THREE.WebGLRenderer({ canvas: canvas });
     renderer.autoClear = false;
@@ -1461,6 +1513,9 @@ function main() {
         scene.add(light);
     }
 
+    playerController.instantiate()
+
+
     for (let i = 0; i < 10; i++) {
         let pos = { x: 0, y: 5, z: 5 + 4 * i };
         WumpaCollectable.instantiate(scene, physicsWorld, pos);
@@ -1504,7 +1559,7 @@ function main() {
 
     for (let i = 0; i < 100; i++) {
         let pos = { x: -4 * i - Math.sin(2 * Math.PI * i * 5), y: 7 + Math.cos(2 * Math.PI * i * 0.1), z: 300 };
-        WumpaCollectable.instantiate(scene, physicsWorld, pos);
+    //    WumpaCollectable.instantiate(scene, physicsWorld, pos);
     }
 
     rigidBodies.push(CrateManager.instantiate(scene, physicsWorld, { x: 5, y: 4, z: 300 }, crateTypes.checkpoint))
@@ -1576,7 +1631,6 @@ function main() {
     groundMesh.position.set(-125, 300, 735)
     scene.add(groundMesh);
 
-    playerController.instantiate()
  
     function render() {
         const deltaTime = clock.getDelta();
@@ -1694,6 +1748,7 @@ function main() {
         requestAnimationFrame(render);
     }
 
+    sounds.music.play();
     requestAnimationFrame(render);
 }
 

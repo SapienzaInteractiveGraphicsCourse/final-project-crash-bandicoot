@@ -1,9 +1,73 @@
 <!DOCTYPE html>
 <html>
-    <head>
 
-    </head>
-    <body>
-        <a href="game.html">Play</a>
-    </body>
+<head>
+    <style>
+        html,
+        body {
+            margin: 0;
+            height: 100%;
+            width: 100%;
+            text-align: center;
+            background-image: url('https://images3.alphacoders.com/644/644764.png');
+            background-repeat: no-repeat;
+            background-size: cover;
+            background-position: center center;
+        }
+
+        #mainMenu {
+            position: relative;
+            width: 50%;
+            height: 50%;
+            top: 50%;
+            transform: translateY(-50%);
+            margin: 0 auto;
+
+        }
+
+        #crashLogo {
+            width: 100%;
+            height: 50%;
+            background-image: url('./img/crashLogo.png');
+            background-repeat: no-repeat;
+            background-size: contain;
+            background-position: center center;
+        }
+        a {
+            color: #ffffff;
+            font-size: 4.5em;
+            text-shadow:
+                /* create a black outline */
+                -2px -2px 0 #000,
+                0 -2px 0 #000,
+                2px -2px 0 #000,
+                2px 0 0 #000,
+                2px 2px 0 #000,
+                0 2px 0 #000,
+                -2px 2px 0 #000,
+                -2px 0 0 #000;
+            outline: none;
+            text-decoration: none;
+        }
+        a:hover {
+            color: #F94A00;
+        }
+    </style>
+</head>
+
+<body>
+    <div id = "mainMenu">
+        <div id = "crashLogo">
+            
+        </div><br>
+        <div style="display: inline-block; text-align: left;">
+            <a href="game.html">Play</a><br>
+            <a href="game.html">Options</a><br>
+        </div>
+
+
+    </div>
+  
+</body>
+
 </html>
