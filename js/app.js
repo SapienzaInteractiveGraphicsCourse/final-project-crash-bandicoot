@@ -279,11 +279,9 @@ class GameManager {
             gameManager.modelsLoaded++
             waitForLoading();
 
-
         }, undefined, function (error) {
             console.error(error);
         });
-
 
     }
 
@@ -1602,7 +1600,6 @@ function main() {
 
     playerController.instantiate()
 
-
     for (let i = 0; i < 10; i++) {
         let pos = { x: 0, y: 5, z: 5 + 4 * i };
         WumpaCollectable.instantiate(scene, physicsWorld, pos);
@@ -1963,7 +1960,7 @@ function createGround(info) {
     transform.setRotation(new Ammo.btQuaternion(quat.x, quat.y, quat.z, quat.w));
     let motionState = new Ammo.btDefaultMotionState(transform);
 
-    let colShape = new Ammo.btBoxShape(new Ammo.btVector3(scale.x * 0.5, scale.y * 0.5, scale.z * 0.5));
+    let colShape = new Ammo.btBoxShape(new Ammo.btVector3(scale.x * 0.5, scale.y*0.5, scale.z * 0.5));
     colShape.setMargin(0.05);
 
     let localInertia = new Ammo.btVector3(0, 0, 0);
@@ -2163,28 +2160,22 @@ function updatePhysics(deltaTime) {
 function updateCamera() {
     const camera = scene.getObjectByName("playerCamera")
     const player = scene.getObjectByName("player")
-    const cameraOffset = getCameraHeigth(player)
 
-    const startX = getCameraX(player)
+    const curvePos = getCurvePosAtPlayer(player)
 
-    camera.position.y = cameraOffset;
+    camera.position.y = curvePos.y;
     camera.position.z = player.position.z - 34;
 
     if (player.position.y < 150) {
         camera.lookAt(getForwardVector(player))
         camera.rotation.y = -camera.rotation.y
-        camera.position.x = startX
+        camera.position.x = curvePos.x
     } else {
         camera.position.x = player.position.x - 15
         camera.position.y = 315
         camera.position.z = player.position.z - 48
     }
 }
-
-
-
-let ammoTmpPos = null, ammoTmpQuat = null;
-
 
 
 function moveLinear(kObject, movement, speed) {
@@ -2198,8 +2189,6 @@ function moveLinear(kObject, movement, speed) {
         physicsBody.getLinearVelocity().setZ(0)
         return
     }
-
-
 
     const posUpdateX = kObject.position.x;
     const posUpdateZ = kObject.position.z;
@@ -2403,49 +2392,25 @@ function handleInput(inputCode, inputKeys) {
 }
 
 
-function getCameraHeigth(player) {
+function getCurvePosAtPlayer() {
 
     const startZ = curve.getPointAt(0).z
-
-    const playerZ = player.position.z
-
+    const playerZ = playerController.threeCrash.position.z
     const length = curve.getLength();
-    //const length = startZ-endZ
 
     const currentLength = (playerZ - startZ) / length;
-
     const currentY = curve.getPointAt(currentLength).y
+    const currentX = curve.getPointAt(currentLength).x;
 
-
-    return currentY;
-
-}
-
-
-function getCameraX(player) {
-    // curve = if player.x sta a -250 circa
-
-
-    const startZ = curve.getPointAt(0).z
-
-    const playerZ = player.position.z
-
-    const length = curve.getLength();
-    // oppure length = startZ-endZ
-
-    const currentHeigth = (playerZ - startZ) / length;
-
-    return curve.getPointAt(currentHeigth).x;
+    return {x: currentX, y: currentY};
 
 }
+
 
 function getForwardVector(player) {
     const startZ = curve.getPointAt(0).z
-
     const playerZ = player.position.z - 10
-
     const length = curve.getLength();
-
     const currentHeigth = (playerZ - startZ) / length;
 
     return curve.getPointAt(currentHeigth);
