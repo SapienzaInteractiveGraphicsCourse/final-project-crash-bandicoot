@@ -1691,9 +1691,9 @@ function main() {
     composer.addPass(new RenderPass(scene, cameraPersp));
 
     const bloomPass = new BloomPass(0.1, 25, 4, 256);
+    composer.addPass(bloomPass);
 
-
-    const filmPass = new FilmPass(0.55, 0.5, canvas.clientHeight * 0.5, false);
+    const filmPass = new FilmPass(0.55, 0.5, canvas.clientHeight, false);
     filmPass.renderToScreen = true;
     composer.addPass(filmPass);
 
@@ -1995,7 +1995,7 @@ function main() {
         if (resizeRendererToDisplaySize(renderer)) {
             const canvas = renderer.domElement;
             composer.setSize(canvas.width, canvas.height)
-            composer.passes[2].uniforms.sCount.value = 2 * canvas.height
+            composer.passes[2].uniforms.sCount.value = canvas.height
 
             const camera = cameraPersp;
             camera.aspect = canvas.clientWidth / canvas.clientHeight;
