@@ -5,7 +5,7 @@
 
 The project aims to recreate the gameplay and the look and feel of the Crash Bandicoot games for the Sony PlayStation from the 1990s.
 
-## [Link to the game](https://nodejs.org/) 
+## [Link to the game](https://sapienzainteractivegraphicscourse.github.io/final-project-crash-bandicoot/) 
 
 - Reach the end of the level
 - Break all the crates to get a gem
