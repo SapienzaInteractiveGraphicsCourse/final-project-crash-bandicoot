@@ -25,8 +25,8 @@ document.addEventListener("DOMContentLoaded", (event) => {
 });
 
 let overlayMenuValues = {
-    crateType : "wumpa",
-    levelTheme : "templeruins",
+    crateType: "wumpa",
+    levelTheme: "templeruins",
     postProcessing: true,
     showCurve: false,
     fogAmount: 200,
@@ -72,6 +72,8 @@ class GameManager {
         this.physicsReady = false;
         this.modelsLoaded = 0;
         this.deathHeight = -2;
+
+        this.gem = null;
     }
 
     showLoading() {
@@ -118,6 +120,9 @@ class GameManager {
         sounds.music.pause();
         sounds.music.currentTime = 0;
 
+        sounds.warpSound.currentTime = 0;
+        sounds.warpSound.play();
+
         new TWEEN.Tween({ opacity: 0, transform: 100 })
             .to({ opacity: 1, transform: 0 }, 1000)
             .onUpdate(function (object) {
@@ -136,7 +141,7 @@ class GameManager {
     }
 
     modelsReady() {
-        return this.modelsLoaded == 3
+        return this.modelsLoaded == 4
     }
 
     initMaterials() {
@@ -292,6 +297,20 @@ class GameManager {
             console.error(error);
         });
 
+        gltfLoader.load('./models/gem/scene.gltf', function (gltf) {
+
+            let gemModel = gltf.scene
+            gemModel.castShadow = true;
+            gemModel.scale.set(2, 2, 2);
+            models.gem = gemModel
+            gameManager.modelsLoaded++
+            waitForLoading();
+
+        }, undefined, function (error) {
+            console.error(error);
+        });
+
+
     }
 
 
@@ -299,7 +318,7 @@ class GameManager {
         sounds.spinSound = new Audio("./sounds/spinSound.wav");
         sounds.spinSound.volume -= 0.5
 
-        sounds.musics = {templeRuins: new Audio("./sounds/templeruins.ogg"), snowGo: new Audio("./sounds/snowgo.ogg")}
+        sounds.musics = { templeRuins: new Audio("./sounds/templeruins.ogg"), snowGo: new Audio("./sounds/snowgo.ogg") }
 
         sounds.music = sounds.musics.templeRuins
         sounds.music.volume -= 0.6;
@@ -311,12 +330,18 @@ class GameManager {
         sounds.createBreakSound.volume -= 0.2
 
         sounds.akuakuSound = new Audio("./sounds/akuaku.wav");
-        sounds.akuakuDeathSound = new Audio("./sounds/akuaku_vanish.wav");
+        sounds.akuakuDeathSound = new Audio("./sounds/akuaku_vanish.mp3");
 
         sounds.slideSound = new Audio("./sounds/slide.wav");
         sounds.slideSound.volume -= 0.5
         sounds.nitroSound = new Audio("./sounds/nitro.wav");
         sounds.woahSound = new Audio("./sounds/woah.wav");
+
+        sounds.warpSound = new Audio("./sounds/warp.mp3");
+        sounds.gemSound = new Audio("./sounds/gemSound.wav");
+
+
+
         sounds.checkpointSound = new Audio("./sounds/checkpoint2.wav");
         sounds.checkpointSound.volume -= 0.6
 
@@ -641,6 +666,9 @@ class PlayerController {
     respawn() {
         isGrounded = false;
         animator.jump(true)
+        sounds.warpSound.currentTime = 0;
+        sounds.warpSound.play();
+
         this.threeCrash.userData.physicsBody.getLinearVelocity().setX(0)
         this.threeCrash.userData.physicsBody.getLinearVelocity().setY(0)
         this.threeCrash.userData.physicsBody.getLinearVelocity().setZ(0)
@@ -1302,6 +1330,8 @@ class CrateManager {
                 statsUI.updateCrateCounter()
             }
         }
+
+        if (statsUI.crates >= LEVEL.totCrates()) { GemCollectable.fall(gameManager.gem) }
     }
 }
 
@@ -1434,11 +1464,121 @@ class WumpaCollectable extends Collectable {
 }
 
 
+class GemCollectable extends Collectable {
+    static instantiate(scene, physicsWorld, pos) {
+        let radius = .5 * 2.5;
+        let quat = { x: 0, y: 0, z: 0, w: 1 };
+        let mass = 0;
+
+        const gemObject = new THREE.Object3D();
+        const gemMesh = new THREE.Object3D();
+
+        gemMesh.name = "gemMesh";
+
+        let gemModel = models.gem.clone()
+        GemCollectable.animate(gemModel)
+        gemMesh.add(gemModel);
+        gemObject.add(gemMesh);
+        scene.add(gemObject);
+
+        //Ammojs Section
+        let transform = new Ammo.btTransform();
+        transform.setIdentity();
+        transform.setOrigin(new Ammo.btVector3(pos.x, pos.y + 100, pos.z));
+        transform.setRotation(new Ammo.btQuaternion(quat.x, quat.y, quat.z, quat.w));
+        let motionState = new Ammo.btDefaultMotionState(transform);
+
+        let colShape = new Ammo.btSphereShape(radius);
+        colShape.setMargin(0.05);
+
+        let localInertia = new Ammo.btVector3(0, 0, 0);
+        colShape.calculateLocalInertia(mass, localInertia);
+
+        let rbInfo = new Ammo.btRigidBodyConstructionInfo(mass, motionState, colShape, localInertia);
+        let body = new Ammo.btRigidBody(rbInfo);
+
+        body.threeObject = gemObject;
+
+        physicsWorld.addRigidBody(body);
+
+        gemObject.userData.tag = "gem";
+        gemObject.userData.physicsBody = body;
+
+
+        rigidBodies.push(gemObject);
+
+        gemObject.userData.collected = false
+
+        const light = new THREE.PointLight(0xFF0000, 0, 150);
+        light.position.set(0,0,0);
+        light.name = "light"
+        gemObject.add(light);
+
+        this.animate(gemObject)
+
+        return gemObject
+    }
+
+    static fall(gem) {
+
+        const gemLight = gem.getObjectByName("light");
+
+        new TWEEN.Tween({ intensity: 0 })
+            .to({ intensity: 5 }, 1500)
+            .onUpdate(function (object) { gemLight.intensity = object.intensity })
+            .easing(TWEEN.Easing.Quadratic.Out).start()
+
+
+        const pos = gem.position.y
+        new TWEEN.Tween({ posY: pos })
+            .to({ posY: pos - 100 }, 1500)
+            .easing(TWEEN.Easing.Bounce.Out)
+            .onUpdate(function (object) {
+
+                let transform = new Ammo.btTransform();
+                transform.setIdentity();
+
+                transform.setOrigin(new Ammo.btVector3(gem.position.x, object.posY, gem.position.z));
+                transform.setRotation(new Ammo.btQuaternion(0, 0, 0, 1));
+
+                let motionState = new Ammo.btDefaultMotionState(transform);
+                gem.userData.physicsBody.setMotionState(motionState);
+
+                gem.position.set(gem.position.x, object.posY, gem.position.z);
+            })
+            .start();
+    }
+
+    static collect(gem) {
+        if (gem.userData.collected) return
+        super.collect(gem, sounds.gemSound);
+
+        let gemMesh = gem.getObjectByName("gemMesh");
+
+        if (gemMesh != null) {
+
+            gem.remove(gemMesh);
+            //wumpaMesh.geometry.dispose();
+            //wumpaMesh.material.dispose();
+            gemMesh = undefined;
+        }
+
+        gem.userData.collected = true;
+    }
+
+    static animate(gem) {
+
+        new TWEEN.Tween({ rotY: 0 })
+            .to({ rotY: 2 * Math.PI }, 3500)
+            .onUpdate(function (object) { gem.rotation.set(gem.rotation.x, object.rotY, gem.rotation.z); })
+            .repeat(Infinity)
+            .start();
+    }
+}
+
 
 
 class AkuAkuCollectable extends Collectable {
-
-
 
     static collect(wumpa) {
 
@@ -1598,7 +1738,7 @@ function main() {
 
 
     {
-        const color = 0x000000; 
+        const color = 0x000000;
         const near = 20;
         const far = overlayMenuValues.fogAmount;
         scene.fog = new THREE.Fog(color, near, far);
@@ -1657,13 +1797,15 @@ function main() {
         WumpaCollectable.instantiate(scene, physicsWorld, pos);
     }
 
-    
+
+    gameManager.gem = GemCollectable.instantiate(scene, physicsWorld, LEVEL.gem)
+
 
 
     for (let i = 0; i < 10; i++) {
         let pos = { x: 4, y: 5, z: 2 * (i + 1) ** 2 + 2 };
-       // console.log(pos)
-     //   rigidBodies.push(CrateManager.instantiate(scene, physicsWorld, pos, "wumpa"))
+        // console.log(pos)
+        //   rigidBodies.push(CrateManager.instantiate(scene, physicsWorld, pos, "wumpa"))
     }
 
 
@@ -1778,7 +1920,7 @@ function main() {
 
 
     // Listeners for the settings
-    document.getElementById("levelTheme").onchange = function () { 
+    document.getElementById("levelTheme").onchange = function () {
 
         if (this.options[this.selectedIndex].value !== "templeruins" && this.options[this.selectedIndex].value !== "snowgo") { return; }
 
@@ -1786,15 +1928,15 @@ function main() {
         sounds.music.currentTime = 0
 
         if (this.options[this.selectedIndex].value === "templeruins") {
-            overlayMenuValues.color = 0x000000; 
+            overlayMenuValues.color = 0x000000;
             sounds.music = sounds.musics.templeRuins
         } else if (this.options[this.selectedIndex].value === "snowgo") {
-            overlayMenuValues.color = 0xFAFAFA; 
+            overlayMenuValues.color = 0xFAFAFA;
             sounds.music = sounds.musics.snowGo
-        } 
+        }
 
         sounds.music.play()
-        
+
         const near = 20;
         const far = overlayMenuValues.fogAmount;
         scene.fog = new THREE.Fog(overlayMenuValues.color, near, far);
@@ -1812,31 +1954,31 @@ function main() {
         renderer.setClearColor(overlayMenuValues.color);
         console.log(scene.fog)
 
-     };
+    };
 
     document.getElementById("cameraCurveToggle").onclick = function () {
-        overlayMenuValues.showCurve = this.checked; 
+        overlayMenuValues.showCurve = this.checked;
         scene.getObjectByName("curve").visible = this.checked
     };
     document.getElementById("postProcessingToggle").onclick = function () {
-        overlayMenuValues.postProcessing = this.checked; 
+        overlayMenuValues.postProcessing = this.checked;
         if (!this.checked) {
             composer.passes[0].renderToScreen = true
-            for (let i=1; i<composer.passes.length; i++) {
+            for (let i = 1; i < composer.passes.length; i++) {
                 composer.passes[i].enabled = false
             }
             composer.passes[3].renderToScreen = false
 
         } else {
             composer.passes[0].renderToScreen = false
-            for (let i=1; i<composer.passes.length; i++) {
+            for (let i = 1; i < composer.passes.length; i++) {
                 composer.passes[i].enabled = true
             }
             composer.passes[3].renderToScreen = false
         }
     };
 
-    
+
 
     function render() {
         const deltaTime = clock.getDelta();
@@ -1850,82 +1992,86 @@ function main() {
             requestAnimationFrame(render)
         }
 
-            // Animations 
-            if (animator.bones && inputAxis != null) {
+        // Animations 
+        if (animator.bones && inputAxis != null) {
 
-                if (isSpinning) {
-                    animator.idle(false)
-                    animator.slide(false)
-                    animator.walk(false)
-                    animator.jump(false)
-                    animator.spin(true)
-                } else if (isSliding) {
-                    animator.idle(false)
-                    animator.walk(false)
-                    animator.jump(false)
-                    animator.spin(false)
-                    animator.slide(true)
-                } else if (!isGrounded) {
-                    animator.idle(false)
-                    animator.slide(false)
-                    animator.walk(false)
-                    animator.spin(false)
-                    animator.jump(true)
-                } else if (isMoving) {
-                    animator.slide(false)
-                    animator.idle(false)
-                    animator.spin(false)
-                    animator.jump(false)
-                    animator.walk(true)
-                } else if (alive) {
-                    animator.slide(false)
-                    animator.walk(false)
-                    animator.jump(false)
-                    animator.walk(false)
-                    animator.idle(true)
-                }
-            }
-
-
-            let speed = 20;
-            if (inputAxis != null && alive) {
-                let movement = new THREE.Vector3((inputAxis.moveHorizontal + inputAxis.moveNegHorizontal), 0, (inputAxis.moveVertical + inputAxis.moveNegVertical)).normalize();
-
-                playerController.move(movement, 2.1 * speed, time)
-
-                if (inputAxis.jump) {
-                    playerController.jump()
-                }
-            }
-            CollisionManager.checkContact(playerController.threeCrash.userData.physicsBody)
-
-            // spinning animation
             if (isSpinning) {
-
-                playerController.spin(time)
-                sounds.spinSound.play();
-
-                if (spinPressed) {
-                    setTimeout(function () { isSpinning = false; sounds.spinSound }, 500);
-                }
-                spinPressed = false;
-            } else {
-                sounds.spinSound.currentTime = 0
+                animator.idle(false)
+                animator.slide(false)
+                animator.walk(false)
+                animator.jump(false)
+                animator.spin(true)
+            } else if (isSliding) {
+                animator.idle(false)
+                animator.walk(false)
+                animator.jump(false)
+                animator.spin(false)
+                animator.slide(true)
+            } else if (!isGrounded) {
+                animator.idle(false)
+                animator.slide(false)
+                animator.walk(false)
+                animator.spin(false)
+                animator.jump(true)
+            } else if (isMoving) {
+                animator.slide(false)
+                animator.idle(false)
+                animator.spin(false)
+                animator.jump(false)
+                animator.walk(true)
+            } else if (alive) {
+                animator.slide(false)
+                animator.walk(false)
+                animator.jump(false)
+                animator.walk(false)
+                animator.idle(true)
             }
+        }
 
-            if (isSliding && isMoving) {
-                playerController.slide()
-            } else {
-                isSliding = false
+
+        let speed = 20;
+        if (inputAxis != null && alive) {
+            let movement = new THREE.Vector3((inputAxis.moveHorizontal + inputAxis.moveNegHorizontal), 0, (inputAxis.moveVertical + inputAxis.moveNegVertical)).normalize();
+
+            playerController.move(movement, 2.1 * speed, time)
+
+            if (inputAxis.jump) {
+                playerController.jump()
             }
+        }
+        CollisionManager.checkContact(playerController.threeCrash.userData.physicsBody)
 
-            playerController.threeAkuaku.position.y = Math.sin(time * 2) / 1.5;
-            playerController.threeAkuaku.rotation.y = time * 5;
+        // spinning animation
+        if (isSpinning) {
 
-            if ((playerController.threeCrash.position.y < gameManager.deathHeight)) {
-                console.log("dead")
-                playerController.die();
+            playerController.spin(time)
+            sounds.spinSound.play();
+
+            if (spinPressed) {
+                setTimeout(function () { isSpinning = false; sounds.spinSound }, 500);
             }
+            spinPressed = false;
+        } else {
+            sounds.spinSound.currentTime = 0
+        }
+
+        if (isSliding && isMoving) {
+            playerController.slide()
+        } else {
+            isSliding = false
+        }
+
+        playerController.threeAkuaku.position.y = Math.sin(time * 2) / 1.5;
+        playerController.threeAkuaku.rotation.y = time * 5;
+
+        if ((playerController.threeCrash.position.y < gameManager.deathHeight)) {
+            console.log("dead")
+            playerController.die();
+        }
+
+
+
+
 
         if (resizeRendererToDisplaySize(renderer)) {
             const canvas = renderer.domElement;
@@ -2333,7 +2479,6 @@ class CollisionManager {
                         gameManager.win();
                     }
 
-
                     if (tag === "ground") {
                         isGrounded = true;
                     }
@@ -2344,9 +2489,11 @@ class CollisionManager {
                     }
                     else if (tag === "movingPlatform") {
                         isGrounded = true;
-                        threeObject1.userData.playerGrounded = true
+                        threeObject1.userData.playerGrounded = true;
                     }
-
+                    else if (tag === "gem") {
+                        GemCollectable.collect(threeObject1);
+                    }
                     else if (tag === "wumpa") {
                         WumpaCollectable.collect(threeObject1);
                     }

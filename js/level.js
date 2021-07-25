@@ -146,6 +146,9 @@ export const cameraCurve = [
 ]
 
 
+export const gem = { x: -150, y: 305, z: 710};
+
+
 export const crates = [
     { x: 0, y: 5, z: -3, type: "akuaku" },
     { x: -75, y: 5, z: 300, type: "akuaku" },
@@ -202,6 +205,12 @@ export const crates = [
     //{ x: -75, y: 305, z: 717, type: "nitro" },
     //{ x: -75, y: 305, z: 706.5, type: "nitro" },
     { x: -50, y: 305, z: 710, type: "checkpoint" },
+
+
+    { x: -125, y: 305, z: 705.146484375, type: "wumpa" },
+    { x: -125, y: 305, z: 708.0558471679688, type: "wumpa" },
+
+
 ]
 
 export function totCrates() { return [...crates].filter(function (crate) { return (crate.type !== "nitro") }).length - 1 }
