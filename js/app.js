@@ -215,13 +215,7 @@ class GameManager {
                 texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
                 texture.offset.set(0, 0);
                 texture.repeat.set(35, 35);
-            }),
-            metallicMap: loader.load("./textures/ancient_wall/metallic.png", function (texture) {
-                texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
-                texture.offset.set(0, 0);
-                texture.repeat.set(35, 35);
             })
-
         })
 
         levelTextures = {
@@ -237,6 +231,14 @@ class GameManager {
         gltfLoader.load('./models/crash/crashRollFix.glb', function (gltf) {
             console.log("loadingModels")
 
+            gltf.scene.traverse( function ( node ) {
+
+                if ( node.isMesh || node.isLight ) node.castShadow = true;
+                if ( node.isMesh || node.isLight ) node.receiveShadow = true;
+
+            } );
+
+
             let crashModel = gltf.scene.getObjectByName("Crash")
             let bones = crashModel.getObjectByName("TorsoMain")
             console.log("bones loaded")
@@ -246,6 +248,7 @@ class GameManager {
 
             models.crash = crashModel
             models.crashBones = bones
+
 
             gameManager.modelsLoaded++
             waitForLoading();
@@ -511,11 +514,6 @@ class PlayerController {
 
         let scale = { x: 2, y: 6, z: 1 }
 
-        //threeJS Section
-        const carWidth = 2;
-        const carHeight = 6;
-        const carLength = 1;
-
         const player = new THREE.Object3D();
         player.position.set(pos.x, pos.y, pos.z);
 
@@ -525,17 +523,10 @@ class PlayerController {
 
         const playerMesh = new THREE.Object3D();
         player.add(playerMesh);
-
         playerMesh.name = "playerMesh"
-
-        const bodyGeometry = new THREE.BoxGeometry(carWidth, carHeight, carLength);
-        const bodyMaterial = new THREE.MeshPhongMaterial({ color: 0x6688AA });
-        const bodyMesh = new THREE.Mesh(bodyGeometry, bodyMaterial);
-        bodyMesh.castShadow = true;
 
         cameraPersp.name = "playerCamera"
         scene.add(cameraPersp);
-
 
         playerMesh.add(models.crash)
         this.bones = models.crashBones
@@ -556,7 +547,6 @@ class PlayerController {
         colShape.calculateLocalInertia(mass, localInertia);
 
         let rbInfo = new Ammo.btRigidBodyConstructionInfo(mass, motionState, colShape, localInertia);
-
 
         let body = new Ammo.btRigidBody(rbInfo);
         body.threeObject = player;
@@ -608,6 +598,7 @@ class PlayerController {
             akuakuModel.rotation.y = - Math.PI
             akuakuModel.position.set(-2, 1, -2)
             akuakuModel.castShadow = true;
+
             akuakuModel.scale.set(.0025, .0025, .0025);
 
             akuAku.add(akuakuModel)
@@ -630,9 +621,6 @@ class PlayerController {
 
     die() {
         if (!alive) { return }
-
-        console.log("death at ", this.threeCrash.position.x, this.threeCrash.position.y, this.threeCrash.position.z)
-
         alive = false;
         animator.death(true)
         sounds.woahSound.play();
@@ -1220,8 +1208,9 @@ class CrateManager {
         crateMesh.scale.set(scale.x, scale.y, scale.z);
         crateMesh.name = "crateMesh";
 
-        crate.castShadow = true;
-        crate.receiveShadow = true;
+        if(crateType !== crateTypes.nitro)
+            crateMesh.castShadow = true;
+        crateMesh.receiveShadow = true;
 
         scene.add(crate);
         crate.add(crateMesh);
@@ -1278,6 +1267,7 @@ class CrateManager {
 
         if (crateType === crateTypes.nitro) {
             const light = new THREE.PointLight(0x00FF00, 2.5, 100);
+            light.castShadow = true;
             crate.userData.pointLight = light;
             light.position.set(pos.x, pos.y, pos.z);
             scene.add(light);
@@ -1513,7 +1503,7 @@ class GemCollectable extends Collectable {
 
         gemObject.userData.collected = false
 
-        const light = new THREE.PointLight(0xFF0000, 0, 150);
+        const light = new THREE.PointLight(0xFF0000, 0, 150, 20);
         light.position.set(0, 0, 0);
         light.name = "light"
         gemObject.add(light);
@@ -1549,7 +1539,7 @@ class GemCollectable extends Collectable {
                 gem.userData.physicsBody.setMotionState(motionState);
 
                 gem.position.set(gem.position.x, object.posY, gem.position.z);
-            })
+            }).onComplete(function() { gemLight.castShadow = true })
             .start();
     }
 
@@ -1696,6 +1686,8 @@ function main() {
     renderer.setClearColor(0x000000);
 
     renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
     renderer.gammaFactor = 1.5
     renderer.outputEncoding = THREE.GammaEncoding
     function makeCamera(fov = 40) {
@@ -1721,7 +1713,7 @@ function main() {
     const bloomPass = new BloomPass(
         0.1,    // strength
         25,   // kernel size
-        4,    // sigma ?
+        4,    // sigma 
         256,  // blur render target resolution
     );
 
@@ -1730,7 +1722,7 @@ function main() {
     const filmPass = new FilmPass(
         0.55,   // noise intensity
         0.5,  // scanline intensity
-        canvas.clientHeight,    // scanline count
+        canvas.clientHeight * 0.5,    // scanline count
         false,  // grayscale
     );
     filmPass.renderToScreen = true;
@@ -1739,7 +1731,6 @@ function main() {
     const rgbShift = new ShaderPass(RGBShiftShader);
     rgbShift.uniforms['amount'].value = 0.0010;
     composer.addPass(rgbShift);
-
 
     {
         const color = 0x000000;
@@ -1750,39 +1741,19 @@ function main() {
     }
 
     {
-        const light = new THREE.DirectionalLight(0xFAFAFA, 1);
-        light.position.set(0, 20, -10);
-        light.castShadow = true;
-        light.shadow.mapSize.width = 2048;
-        light.shadow.mapSize.height = 2048;
-
-        const d = 50;
-        light.shadow.camera.left = -d;
-        light.shadow.camera.right = d;
-        light.shadow.camera.top = d;
-        light.shadow.camera.bottom = -d;
-        light.shadow.camera.near = 1;
-        light.shadow.camera.far = 50;
-        light.shadow.bias = 0.001;
+        const light = new THREE.DirectionalLight(0xFAFAFA,.8);
+        light.position.set(15, 20, -10);
+        light.castShadow = false;
+        light.shadow.mapSize.width = 512
+        light.shadow.mapSize.height = 512
+        light.shadow.camera.near = -1
+        light.shadow.camera.far = 200
+        
         scene.add(light);
+        light.name = "directionalLight"
     }
 
-    {
-        const light = new THREE.DirectionalLight(0xffffff, 1);
-        light.position.set(10, 20, 40);
-        light.castShadow = true;
-        light.shadow.mapSize.width = 2048;
-        light.shadow.mapSize.height = 2048;
 
-        const d = 50;
-        light.shadow.camera.left = -d;
-        light.shadow.camera.right = d;
-        light.shadow.camera.top = d;
-        light.shadow.camera.bottom = -d;
-        light.shadow.camera.near = 1;
-        light.shadow.camera.far = 50;
-        light.shadow.bias = 0.001;
-    }
 
     {
         const light = new THREE.AmbientLight(0x404040)
@@ -1916,11 +1887,11 @@ function main() {
         createBlock({ x: -i * 25, y: 300, z: 710 });
     }
 
-    const groundGeometry = new THREE.BoxBufferGeometry(400, 400, 1);
-    const groundMesh = new THREE.Mesh(groundGeometry, levelTextures.wall);
-    groundMesh.receiveShadow = true;
-    groundMesh.position.set(-125, 300, 735)
-    scene.add(groundMesh);
+    const wallGeometry = new THREE.BoxBufferGeometry(400, 400, 1, 25, 25, 2);
+    const wallMesh = new THREE.Mesh(wallGeometry, levelTextures.wall);
+    wallMesh.receiveShadow = true;
+    wallMesh.position.set(-125, 300, 735)
+    scene.add(wallMesh);
 
 
     // Listeners for the settings
@@ -2116,7 +2087,6 @@ function createFallingCylinder(pos) {
     let geometry = new THREE.CylinderGeometry(scale.x, scale.z, scale.y, 16);
     let cylinder = new THREE.Mesh(geometry, levelTextures.cylinder);
 
-
     cylinder.position.set(pos.x, pos.y, pos.z);
 
     cylinder.castShadow = true;
@@ -2203,7 +2173,6 @@ function createGround(info) {
     blockPlane.position.set(pos.x, pos.y, pos.z);
     blockPlane.quaternion.set(quat.x, quat.y, quat.z, quat.w);
 
-    blockPlane.castShadow = true;
     blockPlane.receiveShadow = true;
 
     scene.add(blockPlane);
@@ -2366,7 +2335,7 @@ function createMovingPlatform(pos) {
 function updatePhysics(deltaTime) {
 
     // Step world
-    physicsWorld.stepSimulation(deltaTime, 1);
+    physicsWorld.stepSimulation(deltaTime, 10);
 
     // Update rigid bodies
     for (let i = 0; i < rigidBodies.length; i++) {
