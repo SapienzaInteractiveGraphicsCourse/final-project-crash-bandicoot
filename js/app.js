@@ -2330,10 +2330,6 @@ function createMovingPlatform(pos) {
     body.setFriction(100)
 
 
-    body.setActivationState(STATE.DISABLE_DEACTIVATION);
-    body.setCollisionFlags(2);
-
-
     tween1.chain(tween2)
     tween2.chain(tween1)
 
@@ -2352,33 +2348,10 @@ function createMovingPlatform(pos) {
         blockPlane.position.set(pos.x, object.y, pos.z)
 
 
-
-
-        if (!isGrounded) { // || !alive
+        if (!isGrounded) {
             blockPlane.userData.playerGrounded = false;
             playerController.threeCrash.userData.physicsBody.setFriction(0)
-
         }
-
-        if (false) { //&& !isMoving
-
-
-
-            let transform = new Ammo.btTransform();
-            transform.setIdentity();
-
-            let playerPos = new THREE.Vector3(playerController.threeCrash.position.x, object.y + 3, playerController.threeCrash.position.z) //-3
-
-            transform.setOrigin(new Ammo.btVector3(playerPos.x, playerPos.y, playerPos.z));
-
-            transform.setRotation(new Ammo.btQuaternion(0, 0, 0, 1));
-
-            let motionState = new Ammo.btDefaultMotionState(transform);
-            playerController.threeCrash.position.set(playerPos.x, playerPos.y, playerPos.z);
-
-            playerController.threeCrash.userData.physicsBody.setMotionState(motionState)
-        }
-
 
     }
 
