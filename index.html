@@ -48,8 +48,23 @@
             outline: none;
             text-decoration: none;
         }
-        a:hover {
+        a:hover, .orange {
             color: #F94A00;
+        }
+
+        .instructions {
+            color: #ffffff;
+            font-size: 1.5em;
+            text-shadow:
+                /* create a black outline */
+                -2px -2px 0 #000,
+                0 -2px 0 #000,
+                2px -2px 0 #000,
+                2px 0 0 #000,
+                2px 2px 0 #000,
+                0 2px 0 #000,
+                -2px 2px 0 #000,
+                -2px 0 0 #000;
         }
     </style>
 </head>
@@ -59,9 +74,14 @@
         <div id = "crashLogo">
             
         </div><br>
-        <div style="display: inline-block; text-align: left;">
+        <p class="instructions">
+            <span class ="orange">WASD:</span> Move<br>
+            <span class ="orange">K:</span> Spin<br>
+            <span class ="orange">Move + L:</span> Slide<br>
+            <span class ="orange">Space:</span> Jump<br>
+            <span class ="orange">Slide then Jump:</span> Jump further<br>
+        </p>
             <a href="game.html">Play</a><br>
-            <a href="game.html">Options</a><br>
         </div>
 
     </div>

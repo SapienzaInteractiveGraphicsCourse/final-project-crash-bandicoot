@@ -332,8 +332,8 @@ class GameManager {
         sounds.akuakuSound = new Audio("./sounds/akuaku.wav");
         sounds.akuakuDeathSound = new Audio("./sounds/akuaku_vanish.mp3");
 
-        sounds.slideSound = new Audio("./sounds/slide.wav");
-        sounds.slideSound.volume -= 0.5
+        sounds.slideSound = new Audio("./sounds/slide.mp3");
+        sounds.slideSound.volume -= 0.4
         sounds.nitroSound = new Audio("./sounds/nitro.wav");
         sounds.woahSound = new Audio("./sounds/woah.wav");
 
@@ -367,7 +367,7 @@ class StatsUI {
     constructor() {
         this.wumpas = 0
         this.crates = 0
-        this.lives = 4
+        this.lives = 40
     }
 
     instantiate(canvas) {
@@ -637,10 +637,9 @@ class PlayerController {
 
 
     die() {
-        if (!alive) return;
         alive = false;
 
-        animator.death()
+        animator.death(true)
         sounds.woahSound.play();
         //isMoving = false;
         this.akuaku = false
@@ -656,15 +655,15 @@ class PlayerController {
             gameManager.showGameOver();
         }
 
-        setTimeout(function () {
-            statsUI.updateLivesCounter(true)
-            playerController.respawn()
-        }, 2000);
+
+
     }
 
 
     respawn() {
+
         isGrounded = false;
+        animator.animPlaying.jump = false
         animator.jump(true)
         sounds.warpSound.currentTime = 0;
         sounds.warpSound.play();
@@ -680,11 +679,11 @@ class PlayerController {
         transform.setRotation(new Ammo.btQuaternion(0, 0, 0, 1));
 
         let motionState = new Ammo.btDefaultMotionState(transform);
-
-        this.threeCrash.position.set(this.checkpoint.x, this.checkpoint.y, this.checkpoint.z)
         this.threeCrash.userData.physicsBody.setMotionState(motionState)
 
-        alive = true;
+        this.threeCrash.position.set(this.checkpoint.x, this.checkpoint.y, this.checkpoint.z)
+        this.threeCrash.getObjectByName("playerMesh").rotation.y = -Math.PI
+
     }
 
 
@@ -729,7 +728,7 @@ class PlayerController {
         if (isSpinning) return;
 
         if (sounds.slideSound.paused) {
-            sounds.slideSound.currentTime = .65
+            sounds.slideSound.currentTime = 0;
             sounds.slideSound.play()
         }
         let physicsBody = this.threeCrash.userData.physicsBody;
@@ -747,7 +746,13 @@ class PlayerController {
 
 
     spin() {
+        if (isSpinning && spinPressed) {return}
 
+        spinPressed=false
+        sounds.spinSound.currentTime = 0
+        sounds.spinSound.play();
+        isSpinning = true
+        setTimeout(function () { isSpinning = false; }, 450);
     }
 
     move(movement, speed) {
@@ -756,7 +761,7 @@ class PlayerController {
 
         isMoving = (movement.x != 0 || movement.z != 0)
 
-        if ((!isMoving && !isSliding) || (!isMoving && isSliding)) {
+        if ((!isMoving && !isSliding) || (!isMoving && isSliding) || playerController.threeCrash.position.y <= gameManager.deathHeight) {
             physicsBody.getLinearVelocity().setX(0)
             physicsBody.getLinearVelocity().setZ(0)
             return
@@ -782,6 +787,7 @@ class PlayerController {
 
 
     setImpulse(physicsBody, jumpSpeed) {
+        if (!alive) { return }
         physicsBody.getLinearVelocity().setY(0)
         const impulseVector = new Ammo.btVector3(0, jumpSpeed * 550, 0);
         physicsBody.applyImpulse(impulseVector);
@@ -1023,7 +1029,6 @@ class Animator {
             .onUpdate(updateSkeletonQuaternions)
 
         deathFalling.chain(deathGround);
-
         this.deathAnimation = deathFalling;
 
         // Win animation
@@ -1158,14 +1163,16 @@ class Animator {
         }
     }
 
-    death() {
+    death(play) {
         this.walkingAnimation.stop();
         this.jumpAnimation.stop();
         this.groundAnimation.stop();
         this.spinAnimation.stop();
         this.idleAnimation.stop();
         this.slideAnimation.stop();
-        this.deathAnimation.start();
+
+        if (play) this.deathAnimation.start();
+        else this.deathAnimation.stop();
     }
 
     win() {
@@ -1993,7 +2000,7 @@ function main() {
         }
 
         // Animations 
-        if (animator.bones && inputAxis != null) {
+        if (animator.bones && inputAxis != null && alive) {
 
             if (isSpinning) {
                 animator.idle(false)
@@ -2019,7 +2026,7 @@ function main() {
                 animator.spin(false)
                 animator.jump(false)
                 animator.walk(true)
-            } else if (alive) {
+            } else {
                 animator.slide(false)
                 animator.walk(false)
                 animator.jump(false)
@@ -2042,20 +2049,13 @@ function main() {
         CollisionManager.checkContact(playerController.threeCrash.userData.physicsBody)
 
         // spinning animation
-        if (isSpinning) {
 
-            playerController.spin(time)
-            sounds.spinSound.play();
 
-            if (spinPressed) {
-                setTimeout(function () { isSpinning = false; sounds.spinSound }, 500);
-            }
-            spinPressed = false;
-        } else {
-            sounds.spinSound.currentTime = 0
-        }
+        if (spinPressed && alive) {
+            playerController.spin();
+        } else { spinPressed = false }
 
-        if (isSliding && isMoving) {
+        if (isSliding && isMoving && alive) {
             playerController.slide()
         } else {
             isSliding = false
@@ -2064,12 +2064,21 @@ function main() {
         playerController.threeAkuaku.position.y = Math.sin(time * 2) / 1.5;
         playerController.threeAkuaku.rotation.y = time * 5;
 
-        if ((playerController.threeCrash.position.y < gameManager.deathHeight)) {
-            console.log("dead")
+        if ((playerController.threeCrash.position.y <= gameManager.deathHeight) && alive) {
             playerController.die();
+
+            setTimeout(function () {
+                animator.death(false)
+                statsUI.updateLivesCounter(true)
+                if (statsUI.lives >= 0)
+                    playerController.respawn()
+            }, 2500);
+
+        } else if (playerController.threeCrash.position.y > gameManager.deathHeight) {
+            alive = true;
         }
 
-
+        
 
 
 
@@ -2396,7 +2405,6 @@ function updatePhysics(deltaTime) {
     for (let i = 0; i < rigidBodies.length; i++) {
         let objThree = rigidBodies[i];
 
-
         let objAmmo = objThree.userData.physicsBody;
         if (objAmmo != null) {
             let ms = objAmmo.getMotionState();
@@ -2579,7 +2587,6 @@ function handleInput(inputCode, inputKeys) {
             inputKeys.jump = true;
         }
         else if (inputCode.code === "KeyK") {
-            isSpinning = true;
             spinPressed = true;
         }
         else if (inputCode.code === "KeyL") {
