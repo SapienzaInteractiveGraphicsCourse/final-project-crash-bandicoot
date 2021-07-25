@@ -2356,11 +2356,11 @@ class CollisionManager {
                             return
                         }
 
-                        if ((localPos.y() < -3.5) || isSpinning || isSliding) {
+                        if ((localPos.y() < -3) || isSpinning || isSliding) {
                             CrateManager.break(scene, threeObject1)
                         }
 
-                        if (localPos.y() < -3.5) {
+                        if (localPos.y() < -3) {
                             playerController.setImpulse(rb0, 5)
                         }
 
