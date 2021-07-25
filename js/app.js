@@ -24,6 +24,15 @@ document.addEventListener("DOMContentLoaded", (event) => {
     Ammo().then(start);
 });
 
+let overlayMenuValues = {
+    crateType : "wumpa",
+    levelTheme : "templeruins",
+    postProcessing: true,
+    showCurve: false,
+    fogAmount: 200,
+    color: 0x000000
+}
+
 let rigidBodies = [];
 let tmpTrans;
 
@@ -45,7 +54,6 @@ let cbContactResult;
 const scene = new THREE.Scene();
 const sceneOrtho = new THREE.Scene();
 
-
 const crateTypes = { akuaku: "akuaku", wumpa: "wumpa", tnt: "tnt", nitro: "nitro", checkpoint: "checkpoint" }
 
 let crateTextures = {};
@@ -62,14 +70,15 @@ class GameManager {
         this.textureReady = false;
         this.audioReady = false;
         this.physicsReady = false;
-        this.modelsLoaded = 0
+        this.modelsLoaded = 0;
+        this.deathHeight = -2;
     }
 
     showLoading() {
         new TWEEN.Tween({ opacity: 0 })
             .to({ opacity: 1 }, 1000)
-            .onUpdate(function (object) { 
-                document.getElementById("loadingScreen").style.opacity = object.opacity 
+            .onUpdate(function (object) {
+                document.getElementById("loadingScreen").style.opacity = object.opacity
             })
             .easing(TWEEN.Easing.Quadratic.InOut)
             .start();
@@ -78,19 +87,22 @@ class GameManager {
     hideLoading() {
         new TWEEN.Tween({ opacity: 1 })
             .to({ opacity: 0 }, 1000)
-            .onUpdate(function (object) { 
-                document.getElementById("loadingScreen").style.opacity = object.opacity 
+            .onUpdate(function (object) {
+                document.getElementById("loadingScreen").style.opacity = object.opacity
             })
             .easing(TWEEN.Easing.Quadratic.InOut)
             .start();
+
+        document.getElementById("overlayMenu").style.zIndex = 3
+
     }
 
     showGameOver() {
         document.getElementById("gameOver").style.zIndex = 4
         new TWEEN.Tween({ opacity: 0, transform: 100 })
             .to({ opacity: 1, transform: 0 }, 1000)
-            .onUpdate(function (object) { 
-                document.getElementById("gameOver").style.opacity = object.opacity 
+            .onUpdate(function (object) {
+                document.getElementById("gameOver").style.opacity = object.opacity
                 document.getElementById("gameOver").style.transform = `translateY(${object.transform}%)`
 
             })
@@ -98,9 +110,8 @@ class GameManager {
             .start();
     }
 
-
     win() {
-        if (!alive) {return}
+        if (!alive) { return }
         alive = false;
         document.getElementById("gameWin").style.zIndex = 4
 
@@ -108,18 +119,17 @@ class GameManager {
         sounds.music.currentTime = 0;
 
         new TWEEN.Tween({ opacity: 0, transform: 100 })
-        .to({ opacity: 1, transform: 0 }, 1000)
-            .onUpdate(function (object) { 
-                document.getElementById("gameWin").style.opacity = object.opacity 
+            .to({ opacity: 1, transform: 0 }, 1000)
+            .onUpdate(function (object) {
+                document.getElementById("gameWin").style.opacity = object.opacity
                 document.getElementById("gameWin").style.transform = `translateY(${object.transform}%)`
             })
             .easing(TWEEN.Easing.Quadratic.InOut)
             .start();
-        if (statsUI.crates >= LEVEL.crates.length){
+        if (statsUI.crates >= LEVEL.totCrates()) {
             document.getElementById("gem").style.display = "inline"
-        } 
+        }
     }
-
 
     gameReady() {
         return (this.textureReady && this.audioReady && this.physicsReady)
@@ -132,7 +142,6 @@ class GameManager {
     initMaterials() {
 
         const loader = new THREE.TextureLoader();
-
 
         let akuakuTexture = [
             new THREE.MeshPhongMaterial({ map: loader.load("./textures/crates/akuaku.jpg") }),
@@ -290,7 +299,9 @@ class GameManager {
         sounds.spinSound = new Audio("./sounds/spinSound.wav");
         sounds.spinSound.volume -= 0.5
 
-        sounds.music = new Audio("./sounds/templeruins.ogg");
+        sounds.musics = {templeRuins: new Audio("./sounds/templeruins.ogg"), snowGo: new Audio("./sounds/snowgo.ogg")}
+
+        sounds.music = sounds.musics.templeRuins
         sounds.music.volume -= 0.6;
 
         sounds.wumpaSound = new Audio("./sounds/wumpaIn.wav");
@@ -319,6 +330,7 @@ class GameManager {
             solver = new Ammo.btSequentialImpulseConstraintSolver();
 
         physicsWorld = new Ammo.btDiscreteDynamicsWorld(dispatcher, overlappingPairCache, solver, collisionConfiguration);
+
         physicsWorld.setGravity(new Ammo.btVector3(0, -150, 0));
 
         this.physicsReady = true;
@@ -389,7 +401,7 @@ class StatsUI {
             sceneOrtho.getObjectByName("livesContainer").add(livesSprite);
         });
 
-        document.getElementById('crateCounter').innerHTML = `0/${LEVEL.crates.length}`
+        document.getElementById('crateCounter').innerHTML = `0/${LEVEL.totCrates()}`
         document.getElementById('livesCounter').innerHTML = this.lives;
 
         this.updatePosition(canvas.clientWidth, canvas.clientHeight)
@@ -433,7 +445,7 @@ class StatsUI {
     }
     updateCrateCounter() {
         this.crates++;
-        document.getElementById('crateCounter').innerHTML = `${this.crates}/${LEVEL.crates.length}`
+        document.getElementById('crateCounter').innerHTML = `${this.crates}/${LEVEL.totCrates()}`
     }
     updateLivesCounter(decrement) {
         if (decrement) {
@@ -457,7 +469,6 @@ class PlayerController {
 
         this.akuaku = false;
         this.invincibility = false;
-        this.deathHeight = -2;
         this.threeCrash = null;
         this.threeAkuaku = null;
         this.checkpoint = new THREE.Vector3(0, 20, 0);
@@ -606,7 +617,7 @@ class PlayerController {
 
         animator.death()
         sounds.woahSound.play();
-        isMoving = false;
+        //isMoving = false;
         this.akuaku = false
         this.threeAkuaku.visible = false;
 
@@ -711,6 +722,37 @@ class PlayerController {
 
     }
 
+    move(movement, speed) {
+
+        let physicsBody = this.threeCrash.userData.physicsBody;
+
+        isMoving = (movement.x != 0 || movement.z != 0)
+
+        if ((!isMoving && !isSliding) || (!isMoving && isSliding)) {
+            physicsBody.getLinearVelocity().setX(0)
+            physicsBody.getLinearVelocity().setZ(0)
+            return
+        }
+
+        const posUpdateX = this.threeCrash.position.x;
+        const posUpdateZ = this.threeCrash.position.z;
+        const posY = this.threeCrash.position.y;
+
+        if (!isSpinning) {
+            this.threeCrash.getObjectByName("playerMesh").lookAt(posUpdateX + movement.x, posY, posUpdateZ + movement.z);
+        } else {
+            this.threeCrash.rotation.x = 0;
+            this.threeCrash.rotation.z = 0;
+
+        }
+        movement.multiplyScalar(speed);
+
+        physicsBody.getLinearVelocity().setX(movement.x)
+        physicsBody.getLinearVelocity().setZ(movement.z)
+
+    }
+
+
     setImpulse(physicsBody, jumpSpeed) {
         physicsBody.getLinearVelocity().setY(0)
         const impulseVector = new Ammo.btVector3(0, jumpSpeed * 550, 0);
@@ -740,7 +782,7 @@ class Animator {
         this.slideAnimation = null;
         this.deathAnimation = null;
         this.winAnimation = null;
-        
+
         this.animPlaying = {
             idle: false,
             spin: false,
@@ -958,19 +1000,19 @@ class Animator {
 
         // Win animation
         startingFrame = { scaleX: playerController.threeCrash.scale.x, scaleY: playerController.threeCrash.scale.y, scaleZ: playerController.threeCrash.scale.z }
-        let middleFrame = {scaleX: startingFrame.scaleX+.5, scaleY: startingFrame.scaleY+.5, scaleZ: startingFrame.scaleZ+.5 }
+        let middleFrame = { scaleX: startingFrame.scaleX + .5, scaleY: startingFrame.scaleY + .5, scaleZ: startingFrame.scaleZ + .5 }
 
         let winAnimationStart = new TWEEN.Tween(startingFrame).to(middleFrame, 100)
-        .easing(TWEEN.Easing.Quadratic.InOut)
-        .onUpdate(function(object){
-            playerController.threeCrash.scale.set(object.scaleX, object.scaleY, object.scaleZ)
-        })
+            .easing(TWEEN.Easing.Quadratic.InOut)
+            .onUpdate(function (object) {
+                playerController.threeCrash.scale.set(object.scaleX, object.scaleY, object.scaleZ)
+            })
 
-        let winAnimationEnd =  new TWEEN.Tween(middleFrame).to({scaleX:0, scaleY:0, scaleZ: 0}, 500)
-        .easing(TWEEN.Easing.Quadratic.InOut)
-        .onUpdate(function(object){
-            playerController.threeCrash.scale.set(object.scaleX, object.scaleY, object.scaleZ)
-        })
+        let winAnimationEnd = new TWEEN.Tween(middleFrame).to({ scaleX: 0, scaleY: 0, scaleZ: 0 }, 500)
+            .easing(TWEEN.Easing.Quadratic.InOut)
+            .onUpdate(function (object) {
+                playerController.threeCrash.scale.set(object.scaleX, object.scaleY, object.scaleZ)
+            })
         winAnimationStart.chain(winAnimationEnd)
 
         this.winAnimation = winAnimationStart
@@ -1104,9 +1146,9 @@ class Animator {
         this.groundAnimation.stop();
         this.spinAnimation.stop();
         this.idleAnimation.stop();
-        this.slideAnimation.stop();  
+        this.slideAnimation.stop();
         if (alive)
-        this.winAnimation.start();
+            this.winAnimation.start();
     }
 
 }
@@ -1216,7 +1258,7 @@ class CrateManager {
     static break(scene, crate) {
         if (crate.userData.broken) return
         crate.userData.broken = true
-        statsUI.updateCrateCounter()
+
 
         let objAmmo = crate.userData.physicsBody;
 
@@ -1240,9 +1282,11 @@ class CrateManager {
             if (crate.userData.crateType === crateTypes.wumpa) {
                 sounds.createBreakSound.play();
                 wumpaFruits.push(WumpaCollectable.instantiate(scene, physicsWorld, { x: crate.position.x, y: crate.position.y, z: crate.position.z }))
+                statsUI.updateCrateCounter()
             } else if (crate.userData.crateType === crateTypes.akuaku) {
                 sounds.createBreakSound.play();
                 let akuAku = AkuAkuCollectable.instantiate(scene, physicsWorld, { x: crate.position.x, y: crate.position.y, z: crate.position.z })
+                statsUI.updateCrateCounter()
                 AkuAkuCollectable.collect(akuAku);
             } else if (crate.userData.crateType === crateTypes.nitro) {
                 new TWEEN.Tween({ intensity: 100 })
@@ -1255,6 +1299,7 @@ class CrateManager {
             } else if (crate.userData.crateType === crateTypes.checkpoint) {
                 sounds.checkpointSound.play()
                 playerController.checkpoint = new THREE.Vector3(crate.position.x, crate.position.y + 20, crate.position.z);
+                statsUI.updateCrateCounter()
             }
         }
     }
@@ -1480,12 +1525,12 @@ function start() {
 
     tmpTrans = new Ammo.btTransform();
 
+
     gameManager.initMaterials();
     gameManager.setupAudio();
     gameManager.setupPhysicsWorld();
 
     gameManager.initModels()
-
     CollisionManager.setupContactResultCallback();
 
 }
@@ -1526,13 +1571,15 @@ function main() {
     const composer = new EffectComposer(renderer);
     composer.addPass(new RenderPass(scene, cameraPersp));
 
+
+    console.log(composer)
+
     const bloomPass = new BloomPass(
-        0.2,    // strength
+        0.1,    // strength
         25,   // kernel size
         4,    // sigma ?
         256,  // blur render target resolution
     );
-    console.log(bloomPass)
 
     composer.addPass(bloomPass);
 
@@ -1551,10 +1598,11 @@ function main() {
 
 
     {
-        const color = 0x000000;  // white
-        const near = 10;
-        const far = 200;
+        const color = 0x000000; 
+        const near = 20;
+        const far = overlayMenuValues.fogAmount;
         scene.fog = new THREE.Fog(color, near, far);
+        console.log(scene.fog)
     }
 
     {
@@ -1607,11 +1655,11 @@ function main() {
 
     for (let i = 0; i < 10; i++) {
         let pos = { x: 4, y: 5, z: 2 * (i + 1) ** 2 + 2 };
-        rigidBodies.push(CrateManager.instantiate(scene, physicsWorld, pos, "wumpa"))
+       // console.log(pos)
+     //   rigidBodies.push(CrateManager.instantiate(scene, physicsWorld, pos, "wumpa"))
     }
 
-    rigidBodies.push(CrateManager.instantiate(scene, physicsWorld, { x: 0, y: 5, z: -3 }, "akuaku"))
-    rigidBodies.push(CrateManager.instantiate(scene, physicsWorld, { x: -75, y: 5, z: 300 }, "akuaku"))
+
 
     for (let i = 0; i < LEVEL.crates.length; i++) {
         let crate = LEVEL.crates[i]
@@ -1670,6 +1718,7 @@ function main() {
     // Create the final object to add to the scene
     const curveObject = new THREE.Line(geometry, material);
     curveObject.visible = false
+    curveObject.name = "curve"
     scene.add(curveObject)
 
     function resizeRendererToDisplaySize(renderer) {
@@ -1720,6 +1769,67 @@ function main() {
     scene.add(groundMesh);
 
 
+    // Listeners for the settings
+    document.getElementById("levelTheme").onchange = function () { 
+
+        if (this.options[this.selectedIndex].value !== "templeruins" && this.options[this.selectedIndex].value !== "snowgo") { return; }
+
+        sounds.music.pause()
+        sounds.music.currentTime = 0
+
+        if (this.options[this.selectedIndex].value === "templeruins") {
+            overlayMenuValues.color = 0x000000; 
+            sounds.music = sounds.musics.templeRuins
+        } else if (this.options[this.selectedIndex].value === "snowgo") {
+            overlayMenuValues.color = 0xFAFAFA; 
+            sounds.music = sounds.musics.snowGo
+        } 
+
+        sounds.music.play()
+        
+        const near = 20;
+        const far = overlayMenuValues.fogAmount;
+        scene.fog = new THREE.Fog(overlayMenuValues.color, near, far);
+        renderer.setClearColor(overlayMenuValues.color);
+        console.log(scene.fog)
+    };
+
+    document.getElementById("fogValue").oninput = function (event) {
+        overlayMenuValues.fogAmount = parseFloat(event.target.value);
+        document.getElementById("fogValLabel").innerHTML = overlayMenuValues.fogAmount;
+
+        const near = 20;
+        const far = overlayMenuValues.fogAmount;
+        scene.fog = new THREE.Fog(overlayMenuValues.color, near, far);
+        renderer.setClearColor(overlayMenuValues.color);
+        console.log(scene.fog)
+
+     };
+
+    document.getElementById("cameraCurveToggle").onclick = function () {
+        overlayMenuValues.showCurve = this.checked; 
+        scene.getObjectByName("curve").visible = this.checked
+    };
+    document.getElementById("postProcessingToggle").onclick = function () {
+        overlayMenuValues.postProcessing = this.checked; 
+        if (!this.checked) {
+            composer.passes[0].renderToScreen = true
+            for (let i=1; i<composer.passes.length; i++) {
+                composer.passes[i].enabled = false
+            }
+            composer.passes[3].renderToScreen = false
+
+        } else {
+            composer.passes[0].renderToScreen = false
+            for (let i=1; i<composer.passes.length; i++) {
+                composer.passes[i].enabled = true
+            }
+            composer.passes[3].renderToScreen = false
+        }
+    };
+
+    
+
     function render() {
         const deltaTime = clock.getDelta();
         const time = clock.getElapsedTime();
@@ -1732,88 +1842,82 @@ function main() {
             requestAnimationFrame(render)
         }
 
-        // Animations 
-        if (animator.bones && inputAxis != null) {
+            // Animations 
+            if (animator.bones && inputAxis != null) {
 
+                if (isSpinning) {
+                    animator.idle(false)
+                    animator.slide(false)
+                    animator.walk(false)
+                    animator.jump(false)
+                    animator.spin(true)
+                } else if (isSliding) {
+                    animator.idle(false)
+                    animator.walk(false)
+                    animator.jump(false)
+                    animator.spin(false)
+                    animator.slide(true)
+                } else if (!isGrounded) {
+                    animator.idle(false)
+                    animator.slide(false)
+                    animator.walk(false)
+                    animator.spin(false)
+                    animator.jump(true)
+                } else if (isMoving) {
+                    animator.slide(false)
+                    animator.idle(false)
+                    animator.spin(false)
+                    animator.jump(false)
+                    animator.walk(true)
+                } else if (alive) {
+                    animator.slide(false)
+                    animator.walk(false)
+                    animator.jump(false)
+                    animator.walk(false)
+                    animator.idle(true)
+                }
+            }
+
+
+            let speed = 20;
+            if (inputAxis != null && alive) {
+                let movement = new THREE.Vector3((inputAxis.moveHorizontal + inputAxis.moveNegHorizontal), 0, (inputAxis.moveVertical + inputAxis.moveNegVertical)).normalize();
+
+                playerController.move(movement, 2.1 * speed, time)
+
+                if (inputAxis.jump) {
+                    playerController.jump()
+                }
+            }
+            CollisionManager.checkContact(playerController.threeCrash.userData.physicsBody)
+
+            // spinning animation
             if (isSpinning) {
-                animator.idle(false)
-                animator.slide(false)
-                animator.walk(false)
-                animator.jump(false)
-                animator.spin(true)
-            } else if (isSliding) {
-                animator.idle(false)
-                animator.walk(false)
-                animator.jump(false)
-                animator.spin(false)
-                animator.slide(true)
-            } else if (!isGrounded) {
-                animator.idle(false)
-                animator.slide(false)
-                animator.walk(false)
-                animator.spin(false)
-                animator.jump(true)
-            } else if (isMoving) {
-                animator.slide(false)
-                animator.idle(false)
-                animator.spin(false)
-                animator.jump(false)
-                animator.walk(true)
-            } else if (alive) {
-                animator.slide(false)
-                animator.walk(false)
-                animator.jump(false)
-                animator.walk(false)
-                animator.idle(true)
-            }
-        }
 
+                playerController.spin(time)
+                sounds.spinSound.play();
 
-        let speed = 20;
-
-        if (inputAxis != null && alive) {
-            let movement = new THREE.Vector3((inputAxis.moveHorizontal + inputAxis.moveNegHorizontal), 0, (inputAxis.moveVertical + inputAxis.moveNegVertical)).normalize();
-
-            moveLinear(playerController.threeCrash, movement, 2.1 * speed, time)
-
-            if (inputAxis.jump) {
-                playerController.jump()
+                if (spinPressed) {
+                    setTimeout(function () { isSpinning = false; sounds.spinSound }, 500);
+                }
+                spinPressed = false;
+            } else {
+                sounds.spinSound.currentTime = 0
             }
 
-        }
-        CollisionManager.checkContact(playerController.threeCrash.userData.physicsBody)
-
-
-
-        // spinning animation
-        if (isSpinning) {
-
-            playerController.spin(time)
-            sounds.spinSound.play();
-
-            if (spinPressed) {
-                setTimeout(function () { isSpinning = false; sounds.spinSound }, 500);
+            if (isSliding && isMoving) {
+                playerController.slide()
+            } else {
+                isSliding = false
             }
-            spinPressed = false;
-        } else {
-            sounds.spinSound.currentTime = 0
-        }
 
+            playerController.threeAkuaku.position.y = Math.sin(time * 2) / 1.5;
+            playerController.threeAkuaku.rotation.y = time * 5;
 
-        if (isSliding && isMoving) {
-            playerController.slide()
-        } else {
-            isSliding = false
-        }
-
-        playerController.threeAkuaku.position.y = Math.sin(time * 2) / 1.5;
-        playerController.threeAkuaku.rotation.y = time * 5;
-
-
-        if ((playerController.threeCrash.position.y < playerController.deathHeight) && alive) {
-            playerController.die();
-        }
-
+            if ((playerController.threeCrash.position.y < gameManager.deathHeight)) {
+                console.log("dead")
+                playerController.die();
+            }
 
         if (resizeRendererToDisplaySize(renderer)) {
             const canvas = renderer.domElement;
@@ -1960,7 +2064,7 @@ function createGround(info) {
     transform.setRotation(new Ammo.btQuaternion(quat.x, quat.y, quat.z, quat.w));
     let motionState = new Ammo.btDefaultMotionState(transform);
 
-    let colShape = new Ammo.btBoxShape(new Ammo.btVector3(scale.x * 0.5, scale.y*0.5, scale.z * 0.5));
+    let colShape = new Ammo.btBoxShape(new Ammo.btVector3(scale.x * 0.5, scale.y * 0.5, scale.z * 0.5));
     colShape.setMargin(0.05);
 
     let localInertia = new Ammo.btVector3(0, 0, 0);
@@ -2129,7 +2233,6 @@ function createMovingPlatform(pos) {
 }
 
 
-
 function updatePhysics(deltaTime) {
 
     // Step world
@@ -2157,19 +2260,20 @@ function updatePhysics(deltaTime) {
 
 }
 
+
 function updateCamera() {
     const camera = scene.getObjectByName("playerCamera")
     const player = scene.getObjectByName("player")
 
-    const curvePos = getCurvePosAtPlayer(player)
 
-    camera.position.y = curvePos.y;
-    camera.position.z = player.position.z - 34;
+    const curvePos = getCurvePosAtPlayer(player)
 
     if (player.position.y < 150) {
         camera.lookAt(getForwardVector(player))
         camera.rotation.y = -camera.rotation.y
         camera.position.x = curvePos.x
+        camera.position.y = curvePos.y;
+        camera.position.z = player.position.z - 34;
     } else {
         camera.position.x = player.position.x - 15
         camera.position.y = 315
@@ -2177,36 +2281,6 @@ function updateCamera() {
     }
 }
 
-
-function moveLinear(kObject, movement, speed) {
-
-    let physicsBody = kObject.userData.physicsBody;
-
-    isMoving = (movement.x != 0 || movement.z != 0)
-
-    if ((!isMoving && !isSliding) || (!isMoving && isSliding)) {
-        physicsBody.getLinearVelocity().setX(0)
-        physicsBody.getLinearVelocity().setZ(0)
-        return
-    }
-
-    const posUpdateX = kObject.position.x;
-    const posUpdateZ = kObject.position.z;
-    const posY = kObject.position.y;
-
-    if (!isSpinning) {
-        kObject.getObjectByName("playerMesh").lookAt(posUpdateX + movement.x, posY, posUpdateZ + movement.z);
-    } else {
-        kObject.rotation.x = 0;
-        kObject.rotation.z = 0;
-
-    }
-    movement.multiplyScalar(speed);
-
-    physicsBody.getLinearVelocity().setX(movement.x)
-    physicsBody.getLinearVelocity().setZ(movement.z)
-
-}
 
 class CollisionManager {
 
@@ -2263,8 +2337,6 @@ class CollisionManager {
                     else if (tag === "movingPlatform") {
                         isGrounded = true;
                         threeObject1.userData.playerGrounded = true
-                        //    threeObject1.userData.playerGrounded = true
-                        //  moveLinear(playerController.threeCrash, threeObject1.userData.direction, 2)
                     }
 
                     else if (tag === "wumpa") {
@@ -2284,7 +2356,6 @@ class CollisionManager {
                             }
                             return
                         }
-
 
                         if ((localPos.y() < -3) || isSpinning || isSliding) //TODO -crate height
                         {
@@ -2308,7 +2379,6 @@ class CollisionManager {
         }
     }
 
-
     static checkContact(physicsBody) {
         physicsWorld.contactTest(physicsBody, cbContactResult);
     }
@@ -2318,10 +2388,10 @@ class CollisionManager {
 
 
 let isGrounded = true;
-let canJump = true
-let onTimeout = false
+let canJump = true;
+let onTimeout = false;
 
-let cameraOrtho
+let cameraOrtho;
 
 
 function handleInput(inputCode, inputKeys) {
@@ -2363,8 +2433,7 @@ function handleInput(inputCode, inputKeys) {
             }
         }
         else if (inputCode.code === "KeyC") {
-            animator.win()
-            //crateEditor()
+            crateEditor()
         }
 
 
@@ -2402,10 +2471,9 @@ function getCurvePosAtPlayer() {
     const currentY = curve.getPointAt(currentLength).y
     const currentX = curve.getPointAt(currentLength).x;
 
-    return {x: currentX, y: currentY};
+    return { x: currentX, y: currentY };
 
 }
-
 
 function getForwardVector(player) {
     const startZ = curve.getPointAt(0).z
@@ -2419,7 +2487,7 @@ function getForwardVector(player) {
 function crateEditor() {
     const playerPos = playerController.threeCrash.position;
     const pos = { x: playerPos.x, y: playerPos.y, z: playerPos.z - 5 }
-    CrateManager.instantiate(scene, physicsWorld, pos, "nitro")
+    CrateManager.instantiate(scene, physicsWorld, pos, overlayMenuValues.crateType)
     console.log(pos)
 }
 

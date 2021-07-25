@@ -89,8 +89,9 @@
             margin: 0 auto;
         }
 
-        #gameOver, #gameWin {
-            position:fixed;
+        #gameOver,
+        #gameWin {
+            position: fixed;
             opacity: 0;
             z-index: -1;
         }
@@ -117,12 +118,22 @@
         }
 
         #loadingScreen {
-            position:fixed;
+            position: fixed;
             z-index: 2;
         }
 
         #gem {
             display: none;
+        }
+
+        #overlayMenu {
+            position: fixed;
+            bottom: 24px;
+            left: 24px;
+            z-index: -1;
+            background-color: white;
+            padding: 16px;
+            opacity: .7
         }
     </style>
 
@@ -153,6 +164,27 @@
             <a href="index.html">Main Menu</a><br>
         </div>
         <br>
+    </div>
+
+    <div id="overlayMenu">
+        <b>Settings Menu</b> <br><br><br>
+        Crate Type: <select id="instantiableCrates">
+            <option value="wumpa">Wumpa</option>
+            <option value="akuaku">Aku Aku</option>
+            <option value="nitro">Nitro</option>
+            <option value="checkpoint">Checkpoint</option>
+        </select><br><br>
+        Level Theme <select id="levelTheme">
+            <option value="templeruins">Temple Ruins</option>
+            <option value="snowgo">Snow Go</option>
+        </select><br><br>
+
+        <input type="checkbox" id="postProcessingToggle" name="postProcessingToggle" value="postProcessingToggle" checked = "true">
+        <label for="postProcessing"> Enable Post Processing</label><br><br>
+        <input type="checkbox" id="cameraCurveToggle" name="cameraCurveToggle" value="cameraCurveToggle">
+        <label for="postProcessing"> Show camera curve</label><br><br>    
+        <input type="range" min="20" max="800" value="200" class="slider" id="fogValue"> 
+        <label for="fogValue"> Fog distance: <span id="fogValLabel">20</span></label><br>
     </div>
 
     <div id="container">
