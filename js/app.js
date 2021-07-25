@@ -1873,7 +1873,6 @@ function main() {
     // Create win platform
     createGround(LEVEL.winPlatform).userData.tag = "win"
 
-
     for (let i = 0; i < LEVEL.fallingCylinders.length; i++) {
         createFallingCylinder(LEVEL.fallingCylinders[i])
     }
@@ -2406,9 +2405,7 @@ class CollisionManager {
             let contactPoint = Ammo.wrapPointer(cp, Ammo.btManifoldPoint);
 
             const distance = contactPoint.getDistance();
-            if (distance > 0) {
-                return
-            };
+            if (distance > 0) { return };
 
             let colWrapper0 = Ammo.wrapPointer(colObj0Wrap, Ammo.btCollisionObjectWrapper);
             let rb0 = Ammo.castObject(colWrapper0.getCollisionObject(), Ammo.btRigidBody);
@@ -2471,12 +2468,12 @@ class CollisionManager {
                             return
                         }
 
-                        if ((localPos.y() < -3) || isSpinning || isSliding) //TODO -crate height
+                        if ((localPos.y() < -3.5) || isSpinning || isSliding) 
                         {
                             CrateManager.break(scene, threeObject1)
                         }
 
-                        if (localPos.y() < -3) {
+                        if (localPos.y() < -3.5) {
                             playerController.setImpulse(rb0, 5)
                         }
 
