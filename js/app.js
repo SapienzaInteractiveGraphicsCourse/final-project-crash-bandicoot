@@ -367,7 +367,7 @@ class StatsUI {
     constructor() {
         this.wumpas = 0
         this.crates = 0
-        this.lives = 40
+        this.lives = 4
     }
 
     instantiate(canvas) {
@@ -385,11 +385,7 @@ class StatsUI {
         wumpaContainer.name = "wumpaContainer"
         sceneOrtho.add(wumpaContainer)
 
-
         sceneOrtho.getObjectByName("wumpaContainer").add(models.wumpaOrtho)
-
-
-
         document.getElementById('wumpaCounter').innerHTML = 0;
 
 
@@ -2074,7 +2070,8 @@ function main() {
                     playerController.respawn()
             }, 2500);
 
-        } else if (playerController.threeCrash.position.y > gameManager.deathHeight) {
+        } else if (playerController.threeCrash.position.y >= playerController.checkpoint.y-1) {
+            // To avoid double-death bug
             alive = true;
         }
 
