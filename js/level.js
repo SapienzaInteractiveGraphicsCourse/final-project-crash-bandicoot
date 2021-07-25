@@ -122,6 +122,7 @@ export const fallingCylinders =
         { x: -25, y: 5.20 - 11, z: 230 },
         { x: -25, y: 11, z: 550 },
         { x: -25, y: 11, z: 580 },
+        { x: -100, y: 303-10, z: 710 },
     ]
 
 export const cameraCurve = [
@@ -194,10 +195,12 @@ export const crates = [
     { x: -37.95798110961914, y: 23.499996185302734, z: 620.48486328125, type: "nitro" },
     { x: -17.968515396118164, y: 23.499996185302734, z: 634.2948608398438, type: "nitro" },
     { x: -12.368515014648438, y: 23.499996185302734, z: 620.99462890625, type: "nitro" },
-    { x: -75, y: 305, z: 713.5, type: "nitro" },
+   // { x: -75, y: 305, z: 713.5, type: "nitro" },
     { x: -75, y: 305, z: 710, type: "nitro" },
-    { x: -75, y: 305, z: 717, type: "nitro" },
-    { x: -75, y: 305, z: 706.5, type: "nitro" },
+    { x: -75, y: 305, z: 717, type: "akuaku" },
+
+    //{ x: -75, y: 305, z: 717, type: "nitro" },
+    //{ x: -75, y: 305, z: 706.5, type: "nitro" },
     { x: -50, y: 305, z: 710, type: "checkpoint" },
 ]
 

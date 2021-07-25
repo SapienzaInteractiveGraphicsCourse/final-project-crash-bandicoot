@@ -1649,9 +1649,16 @@ function main() {
     playerController.instantiate()
 
     for (let i = 0; i < 10; i++) {
-        let pos = { x: 0, y: 5, z: 5 + 4 * i };
+        let pos = { x: -5, y: 5, z: 10 + 4 * i };
         WumpaCollectable.instantiate(scene, physicsWorld, pos);
     }
+    for (let i = 0; i < 10; i++) {
+        let pos = { x: -25, y: 25, z: 582 + 4 * i };
+        WumpaCollectable.instantiate(scene, physicsWorld, pos);
+    }
+
+    
+
 
     for (let i = 0; i < 10; i++) {
         let pos = { x: 4, y: 5, z: 2 * (i + 1) ** 2 + 2 };
@@ -1759,6 +1766,7 @@ function main() {
     }
 
     for (let i = 0; i < 10; i++) {
+        if (i == 4) continue;
         createBlock({ x: -i * 25, y: 300, z: 710 });
     }
 
