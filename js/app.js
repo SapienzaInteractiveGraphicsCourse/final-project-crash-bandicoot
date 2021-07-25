@@ -3,22 +3,19 @@ import * as KEYFRAMES from '../js/keyframes.js'
 import * as LEVEL from '../js/level.js'
 import * as THREE from '../build/three.module.js';
 
-
 let inputAxis;
 let physicsWorld;
 
 let alive = true;
+let respawning = false;
 
 import { GLTFLoader } from '../libs/jsm/loaders/GLTFLoader.js';
-
 import { EffectComposer } from '../libs/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from '../libs/jsm/postprocessing/RenderPass.js';
 import { BloomPass } from '../libs/jsm/postprocessing/BloomPass.js';
 import { FilmPass } from '../libs/jsm/postprocessing/FilmPass.js';
 import { ShaderPass } from '../libs/jsm/postprocessing/ShaderPass.js';
-
 import { RGBShiftShader } from '../libs/jsm/shaders/RGBShiftShader.js';
-
 
 document.addEventListener("DOMContentLoaded", (event) => {
     Ammo().then(start);
@@ -551,7 +548,6 @@ class PlayerController {
 
         let motionState = new Ammo.btDefaultMotionState(transform);
 
-        //let colShape = new Ammo.btSphereShape( 4 );
         let colShape = new Ammo.btBoxShape(new Ammo.btVector3(scale.x * 0.5, scale.y * 0.5, scale.z * 0.5));
 
         colShape.setMargin(0.05);
@@ -633,8 +629,11 @@ class PlayerController {
 
 
     die() {
-        alive = false;
+        if (!alive) { return }
 
+        console.log("death at ", this.threeCrash.position.x, this.threeCrash.position.y, this.threeCrash.position.z)
+
+        alive = false;
         animator.death(true)
         sounds.woahSound.play();
         //isMoving = false;
@@ -651,16 +650,20 @@ class PlayerController {
             gameManager.showGameOver();
         }
 
-
-
+        setTimeout(function () {
+            if (statsUI.lives >= 0)
+                respawning = true;
+        }, 2500);
     }
 
 
     respawn() {
+        this.threeCrash.position.set(this.checkpoint.x, this.checkpoint.y, this.checkpoint.z)
 
         isGrounded = false;
         animator.animPlaying.jump = false
         animator.jump(true)
+
         sounds.warpSound.currentTime = 0;
         sounds.warpSound.play();
 
@@ -669,17 +672,15 @@ class PlayerController {
         this.threeCrash.userData.physicsBody.getLinearVelocity().setZ(0)
 
         let transform = new Ammo.btTransform();
-        transform.setIdentity();
-
-        transform.setOrigin(new Ammo.btVector3(this.checkpoint.x, this.checkpoint.y, this.checkpoint.z));
+        transform.setOrigin(new Ammo.btVector3(this.checkpoint.x, this.checkpoint.y, this.checkpoint.z))
         transform.setRotation(new Ammo.btQuaternion(0, 0, 0, 1));
 
         let motionState = new Ammo.btDefaultMotionState(transform);
         this.threeCrash.userData.physicsBody.setMotionState(motionState)
 
-        this.threeCrash.position.set(this.checkpoint.x, this.checkpoint.y, this.checkpoint.z)
         this.threeCrash.getObjectByName("playerMesh").rotation.y = -Math.PI
 
+        alive = true;
     }
 
 
@@ -742,9 +743,9 @@ class PlayerController {
 
 
     spin() {
-        if (isSpinning && spinPressed) {return}
+        if (isSpinning && spinPressed) { return }
 
-        spinPressed=false
+        spinPressed = false
         sounds.spinSound.currentTime = 0
         sounds.spinSound.play();
         isSpinning = true
@@ -1513,7 +1514,7 @@ class GemCollectable extends Collectable {
         gemObject.userData.collected = false
 
         const light = new THREE.PointLight(0xFF0000, 0, 150);
-        light.position.set(0,0,0);
+        light.position.set(0, 0, 0);
         light.name = "light"
         gemObject.add(light);
 
@@ -1995,6 +1996,7 @@ function main() {
             requestAnimationFrame(render)
         }
 
+
         // Animations 
         if (animator.bones && inputAxis != null && alive) {
 
@@ -2044,9 +2046,6 @@ function main() {
         }
         CollisionManager.checkContact(playerController.threeCrash.userData.physicsBody)
 
-        // spinning animation
-
-
         if (spinPressed && alive) {
             playerController.spin();
         } else { spinPressed = false }
@@ -2060,24 +2059,17 @@ function main() {
         playerController.threeAkuaku.position.y = Math.sin(time * 2) / 1.5;
         playerController.threeAkuaku.rotation.y = time * 5;
 
-        if ((playerController.threeCrash.position.y <= gameManager.deathHeight) && alive) {
-            playerController.die();
 
-            setTimeout(function () {
-                animator.death(false)
-                statsUI.updateLivesCounter(true)
-                if (statsUI.lives >= 0)
-                    playerController.respawn()
-            }, 2500);
-
-        } else if (playerController.threeCrash.position.y >= playerController.checkpoint.y-1) {
-            // To avoid double-death bug
-            alive = true;
+        if (respawning) {
+            respawning = false;
+            animator.death(false)
+            statsUI.updateLivesCounter(true)
+            playerController.respawn()
         }
 
-        
-
-
+        if ((playerController.threeCrash.position.y < gameManager.deathHeight) && alive) {
+            playerController.die();
+        }
 
         if (resizeRendererToDisplaySize(renderer)) {
             const canvas = renderer.domElement;
@@ -2090,7 +2082,7 @@ function main() {
         }
 
         updateCamera();
-        updatePhysics(deltaTime);
+        updatePhysics(deltaTime)
 
         renderer.clear();                     // clear buffers
         composer.render(scene, cameraPersp.cam);     // render scene 1
@@ -2337,6 +2329,11 @@ function createMovingPlatform(pos) {
 
     body.setFriction(100)
 
+
+    body.setActivationState(STATE.DISABLE_DEACTIVATION);
+    body.setCollisionFlags(2);
+
+
     tween1.chain(tween2)
     tween2.chain(tween1)
 
@@ -2396,27 +2393,42 @@ function createMovingPlatform(pos) {
 function updatePhysics(deltaTime) {
 
     // Step world
-    physicsWorld.stepSimulation(deltaTime, 10);
+    physicsWorld.stepSimulation(deltaTime, 1);
 
     // Update rigid bodies
     for (let i = 0; i < rigidBodies.length; i++) {
         let objThree = rigidBodies[i];
 
         let objAmmo = objThree.userData.physicsBody;
+
         if (objAmmo != null) {
-            let ms = objAmmo.getMotionState();
-            if (ms) {
-                ms.getWorldTransform(tmpTrans);
-                let p = tmpTrans.getOrigin();
-                let q = tmpTrans.getRotation();
 
-                objThree.position.set(p.x(), p.y(), p.z());
-                objThree.quaternion.set(q.x(), q.y(), q.z(), q.w());
+            if (objThree.name === "player" && objThree.position.y < gameManager.deathHeight + 3 && !alive) {
+                // Prevent the player to accelerate down to infinity to avoid double deaths
+                objAmmo.getLinearVelocity().setX(0)
+                objAmmo.getLinearVelocity().setY(0)
+                objAmmo.getLinearVelocity().setZ(0)
+
+                let transform = new Ammo.btTransform();
+                transform.setOrigin(new Ammo.btVector3(objThree.position.x, gameManager.deathHeight + 2, objThree.position.z))
+                transform.setRotation(new Ammo.btQuaternion(0, 0, 0, 1));
+
+                let motionState = new Ammo.btDefaultMotionState(transform);
+                objAmmo.setMotionState(motionState)
+
+            } else {
+                let ms = objAmmo.getMotionState();
+                if (ms) {
+                    ms.getWorldTransform(tmpTrans);
+                    let p = tmpTrans.getOrigin();
+                    let q = tmpTrans.getRotation();
+
+                    objThree.position.set(p.x(), p.y(), p.z());
+                    objThree.quaternion.set(q.x(), q.y(), q.z(), q.w());
+                }
             }
-
         }
     }
-
 }
 
 
@@ -2621,7 +2633,6 @@ function handleInput(inputCode, inputKeys) {
 
 
 function getCurvePosAtPlayer() {
-
     const startZ = curve.getPointAt(0).z
     const playerZ = playerController.threeCrash.position.z
     const length = curve.getLength();
@@ -2631,7 +2642,6 @@ function getCurvePosAtPlayer() {
     const currentX = curve.getPointAt(currentLength).x;
 
     return { x: currentX, y: currentY };
-
 }
 
 function getForwardVector(player) {
@@ -2649,4 +2659,3 @@ function crateEditor() {
     CrateManager.instantiate(scene, physicsWorld, pos, overlayMenuValues.crateType)
     console.log(pos)
 }
-
