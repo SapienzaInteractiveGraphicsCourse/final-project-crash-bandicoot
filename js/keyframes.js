@@ -5,7 +5,7 @@ export const spin = {
         torsoMainY: 0,
         torsoMainZ: 0,
         torsoMainW: 1,
-    
+
         torsoMainPosX: 0,
         torsoMainPosY: 0,
         torsoMainPosZ: 0,
@@ -75,27 +75,27 @@ export const spin = {
         upperLegRightY: 0,
         upperLegRightZ: 0,
         upperLegRightW: 1,
-    
+
         lowerLegRightX: 0,
         lowerLegRightY: 0,
         lowerLegRightZ: 0,
         lowerLegRightW: 1,
-    
+
         footRightX: 0,
         footRightY: 0,
         footRightZ: 0,
         footRightW: 1,
-    
+
         upperLegLeftX: 0,
         upperLegLeftY: 0,
         upperLegLeftZ: 0,
         upperLegLeftW: 1,
-    
+
         lowerLegLeftX: 0,
         lowerLegLeftY: 0,
         lowerLegLeftZ: 0,
         lowerLegLeftW: 1,
-    
+
         footLeftX: 0,
         footLeftY: 0,
         footLeftZ: 0,
@@ -1323,7 +1323,7 @@ export const idle = {
         footLeftX: 0,
         footLeftY: 0,
         footLeftZ: 0,
-        footLeftW: 1 
+        footLeftW: 1
     },
 
     middle: {
@@ -1361,7 +1361,7 @@ export const idle = {
         earRightZ: -0.053984,
         earRightW: 0.982489,
 
-        earLeftX:  0.141875,
+        earLeftX: 0.141875,
         earLeftY: 0.062785,
         earLeftZ: 0.053984,
         earLeftW: 0.982489,
@@ -1424,7 +1424,7 @@ export const idle = {
         footLeftX: 0,
         footLeftY: 0,
         footLeftZ: 0,
-        footLeftW:1 
+        footLeftW: 1
     },
 
     lookRight: {
@@ -1525,9 +1525,9 @@ export const idle = {
         footLeftX: 0,
         footLeftY: 0,
         footLeftZ: 0,
-        footLeftW: 1 
+        footLeftW: 1
     }
-    
+
 }
 
 export const slide = {

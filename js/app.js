@@ -228,15 +228,15 @@ class GameManager {
     }
 
     initModels() {
-        gltfLoader.load('./models/crash/crashRollFix.glb', function (gltf) {
+        gltfLoader.load('./models/crash/crash.glb', function (gltf) {
             console.log("loadingModels")
 
-            gltf.scene.traverse( function ( node ) {
+            gltf.scene.traverse(function (node) {
 
-                if ( node.isMesh || node.isLight ) node.castShadow = true;
-                if ( node.isMesh || node.isLight ) node.receiveShadow = true;
+                if (node.isMesh || node.isLight) node.castShadow = true;
+                if (node.isMesh || node.isLight) node.receiveShadow = true;
 
-            } );
+            });
 
 
             let crashModel = gltf.scene.getObjectByName("Crash")
@@ -531,7 +531,7 @@ class PlayerController {
         playerMesh.add(models.crash)
         this.bones = models.crashBones
 
-        //Ammojs Section
+        
         let transform = new Ammo.btTransform();
         transform.setIdentity();
         transform.setOrigin(new Ammo.btVector3(pos.x, pos.y, pos.z));
@@ -881,8 +881,6 @@ class Animator {
             );
         };
 
-
-
         // Idle
         let startingFrame = { ...KEYFRAMES.idle.lookLeft }
         let idleLeft = new TWEEN.Tween(startingFrame).to(KEYFRAMES.idle.middle, 200)
@@ -1185,7 +1183,7 @@ class CrateManager {
         let quat = { x: 0, y: 0, z: 0, w: 1 };
         let mass = 300;
 
-        //threeJS Section
+        
         let crate = new THREE.Object3D();
 
         let mat;
@@ -1208,14 +1206,14 @@ class CrateManager {
         crateMesh.scale.set(scale.x, scale.y, scale.z);
         crateMesh.name = "crateMesh";
 
-        if(crateType !== crateTypes.nitro)
+        if (crateType !== crateTypes.nitro)
             crateMesh.castShadow = true;
         crateMesh.receiveShadow = true;
 
         scene.add(crate);
         crate.add(crateMesh);
 
-        //Ammojs Section
+        
         let transform = new Ammo.btTransform();
         transform.setIdentity();
         transform.setOrigin(new Ammo.btVector3(pos.x, pos.y, pos.z));
@@ -1255,7 +1253,6 @@ class CrateManager {
 
         body.threeObject = crate;
 
-        //  crateMesh.name = "crateMesh";
         crate.userData.tag = "crate";
         crate.userData.crateType = crateType;
         crate.userData.broken = false
@@ -1392,8 +1389,6 @@ class WumpaCollectable extends Collectable {
         if (wumpaMesh != null) {
 
             wumpa.remove(wumpaMesh);
-            //wumpaMesh.geometry.dispose();
-            //wumpaMesh.material.dispose();
             wumpaMesh = undefined;
         }
 
@@ -1424,7 +1419,7 @@ class WumpaCollectable extends Collectable {
         wumpaObject.add(wumpaMesh);
         scene.add(wumpaObject);
 
-        //Ammojs Section
+        
         let transform = new Ammo.btTransform();
         transform.setIdentity();
         transform.setOrigin(new Ammo.btVector3(pos.x, pos.y, pos.z));
@@ -1475,7 +1470,7 @@ class GemCollectable extends Collectable {
         gemObject.add(gemMesh);
         scene.add(gemObject);
 
-        //Ammojs Section
+        
         let transform = new Ammo.btTransform();
         transform.setIdentity();
         transform.setOrigin(new Ammo.btVector3(pos.x, pos.y + 100, pos.z));
@@ -1509,7 +1504,6 @@ class GemCollectable extends Collectable {
         gemObject.add(light);
 
         this.animate(gemObject)
-
         return gemObject
     }
 
@@ -1539,21 +1533,16 @@ class GemCollectable extends Collectable {
                 gem.userData.physicsBody.setMotionState(motionState);
 
                 gem.position.set(gem.position.x, object.posY, gem.position.z);
-            }).onComplete(function() { gemLight.castShadow = true })
+            }).onComplete(function () { gemLight.castShadow = true })
             .start();
     }
 
     static collect(gem) {
         if (gem.userData.collected) return
         super.collect(gem, sounds.gemSound);
-
         let gemMesh = gem.getObjectByName("gemMesh");
-
         if (gemMesh != null) {
-
             gem.remove(gemMesh);
-            //wumpaMesh.geometry.dispose();
-            //wumpaMesh.material.dispose();
             gemMesh = undefined;
         }
 
@@ -1580,7 +1569,6 @@ class AkuAkuCollectable extends Collectable {
 
         super.collect(wumpa, sounds.akuakuSound)
 
-
         let wumpaMesh = wumpa.getObjectByName("akuakuMesh");
 
         if (wumpaMesh != null) {
@@ -1593,9 +1581,6 @@ class AkuAkuCollectable extends Collectable {
         }
 
         playerController.assignAkuAku()
-
-
-
     }
 
     static instantiate(scene, physicsWorld, pos) {
@@ -1615,7 +1600,7 @@ class AkuAkuCollectable extends Collectable {
         targetOrbit.position.y = 8;
 
 
-        //Ammojs Section
+        
         let transform = new Ammo.btTransform();
         transform.setIdentity();
         transform.setOrigin(new Ammo.btVector3(pos.x, pos.y, pos.z));
@@ -1658,8 +1643,6 @@ const gameManager = new GameManager();
 function start() {
 
     tmpTrans = new Ammo.btTransform();
-
-
     gameManager.initMaterials();
     gameManager.setupAudio();
     gameManager.setupPhysicsWorld();
@@ -1691,7 +1674,7 @@ function main() {
     renderer.gammaFactor = 1.5
     renderer.outputEncoding = THREE.GammaEncoding
     function makeCamera(fov = 40) {
-        const aspect = 2;  // the canvas default
+        const aspect = 2;  
         const zNear = 0.1;
         const zFar = 1000;
         return new THREE.PerspectiveCamera(fov, aspect, zNear, zFar);
@@ -1707,24 +1690,10 @@ function main() {
     const composer = new EffectComposer(renderer);
     composer.addPass(new RenderPass(scene, cameraPersp));
 
+    const bloomPass = new BloomPass(0.1, 25, 4, 256);
 
-    console.log(composer)
 
-    const bloomPass = new BloomPass(
-        0.1,    // strength
-        25,   // kernel size
-        4,    // sigma 
-        256,  // blur render target resolution
-    );
-
-    composer.addPass(bloomPass);
-
-    const filmPass = new FilmPass(
-        0.55,   // noise intensity
-        0.5,  // scanline intensity
-        canvas.clientHeight * 0.5,    // scanline count
-        false,  // grayscale
-    );
+    const filmPass = new FilmPass(0.55, 0.5, canvas.clientHeight * 0.5, false);
     filmPass.renderToScreen = true;
     composer.addPass(filmPass);
 
@@ -1737,23 +1706,20 @@ function main() {
         const near = 20;
         const far = overlayMenuValues.fogAmount;
         scene.fog = new THREE.Fog(color, near, far);
-        console.log(scene.fog)
     }
 
     {
-        const light = new THREE.DirectionalLight(0xFAFAFA,.8);
+        const light = new THREE.DirectionalLight(0xFAFAFA, .8);
         light.position.set(15, 20, -10);
         light.castShadow = false;
-        light.shadow.mapSize.width = 512
-        light.shadow.mapSize.height = 512
-        light.shadow.camera.near = -1
-        light.shadow.camera.far = 200
-        
+        light.shadow.mapSize.width = 512;
+        light.shadow.mapSize.height = 512;
+        light.shadow.camera.near = -1;
+        light.shadow.camera.far = 200;
+
         scene.add(light);
         light.name = "directionalLight"
     }
-
-
 
     {
         const light = new THREE.AmbientLight(0x404040)
@@ -1771,25 +1737,13 @@ function main() {
         let pos = { x: -25, y: 25, z: 582 + 4 * i };
         WumpaCollectable.instantiate(scene, physicsWorld, pos);
     }
-
-
-    gameManager.gem = GemCollectable.instantiate(scene, physicsWorld, LEVEL.gem)
-
-
-
-    for (let i = 0; i < 10; i++) {
-        let pos = { x: 4, y: 5, z: 2 * (i + 1) ** 2 + 2 };
-        // console.log(pos)
-        //   rigidBodies.push(CrateManager.instantiate(scene, physicsWorld, pos, "wumpa"))
-    }
-
-
+    gameManager.gem = GemCollectable.instantiate(scene, physicsWorld, LEVEL.gem);
 
     for (let i = 0; i < LEVEL.crates.length; i++) {
         let crate = LEVEL.crates[i]
         let pos = { x: crate.x, y: crate.y, z: crate.z };
 
-        rigidBodies.push(CrateManager.instantiate(scene, physicsWorld, pos, crate.type))
+        rigidBodies.push(CrateManager.instantiate(scene, physicsWorld, pos, crate.type));
     }
 
 
@@ -1798,19 +1752,19 @@ function main() {
         const width = canvas.clientWidth;
         const height = canvas.clientHeight;
 
-        const left = -width * 0.5
-        const right = width * 0.5
-        const top = height * 0.5
-        const bottom = -height * 0.5
-        const near = -35
-        const far = 100
+        const left = -width * 0.5;
+        const right = width * 0.5;
+        const top = height * 0.5;
+        const bottom = -height * 0.5;
+        const near = -35;
+        const far = 100;
 
         return new THREE.OrthographicCamera(left, right, top, bottom, near, far);
     }
-    cameraOrtho = makeOrtographicCamera()
-    cameraOrtho.position.z = 10
+    cameraOrtho = makeOrtographicCamera();
+    cameraOrtho.position.z = 10;
 
-    statsUI.instantiate(canvas)
+    statsUI.instantiate(canvas);
 
 
     for (let i = 0; i < 100; i++) {
@@ -1841,9 +1795,9 @@ function main() {
 
     // Create the final object to add to the scene
     const curveObject = new THREE.Line(geometry, material);
-    curveObject.visible = false
-    curveObject.name = "curve"
-    scene.add(curveObject)
+    curveObject.visible = false;
+    curveObject.name = "curve";
+    scene.add(curveObject);
 
     function resizeRendererToDisplaySize(renderer) {
         const canvas = renderer.domElement;
@@ -1867,23 +1821,18 @@ function main() {
 
     // Load level
     for (let i = 0; i < LEVEL.ground.length; i++) {
-        createGround(LEVEL.ground[i])
+        createGround(LEVEL.ground[i]);
     }
 
     // Create win platform
     createGround(LEVEL.winPlatform).userData.tag = "win"
 
     for (let i = 0; i < LEVEL.fallingCylinders.length; i++) {
-        createFallingCylinder(LEVEL.fallingCylinders[i])
+        createFallingCylinder(LEVEL.fallingCylinders[i]);
     }
 
     for (let i = 0; i < LEVEL.movingPlaftorms.length; i++) {
-        createMovingPlatform(LEVEL.movingPlaftorms[i])
-    }
-
-    for (let i = 0; i < 10; i++) {
-        if (i == 4) continue;
-        createBlock({ x: -i * 25, y: 300, z: 710 });
+        createMovingPlatform(LEVEL.movingPlaftorms[i]);
     }
 
     const wallGeometry = new THREE.BoxBufferGeometry(400, 400, 1, 25, 25, 2);
@@ -1891,7 +1840,6 @@ function main() {
     wallMesh.receiveShadow = true;
     wallMesh.position.set(-125, 300, 735)
     scene.add(wallMesh);
-
 
     // Listeners for the settings
     document.getElementById("levelTheme").onchange = function () {
@@ -1903,9 +1851,13 @@ function main() {
 
         if (this.options[this.selectedIndex].value === "templeruins") {
             overlayMenuValues.color = 0x000000;
+            document.getElementById("overlayMenu").style.backgroundColor = "white"
+            document.getElementById("overlayMenu").style.color = "black"
             sounds.music = sounds.musics.templeRuins
         } else if (this.options[this.selectedIndex].value === "snowgo") {
             overlayMenuValues.color = 0xFAFAFA;
+            document.getElementById("overlayMenu").style.backgroundColor = "black"
+            document.getElementById("overlayMenu").style.color = "white"
             sounds.music = sounds.musics.snowGo
         }
 
@@ -1965,7 +1917,6 @@ function main() {
             animator.idle(true)
             requestAnimationFrame(render)
         }
-
 
         // Animations 
         if (animator.bones && inputAxis != null && alive) {
@@ -2081,8 +2032,6 @@ function createFallingCylinder(pos) {
     let quat = { x: 0, y: 0, z: 0, w: 1 }
     let mass = 0;
 
-    //threeJS Section
-
     let geometry = new THREE.CylinderGeometry(scale.x, scale.z, scale.y, 16);
     let cylinder = new THREE.Mesh(geometry, levelTextures.cylinder);
 
@@ -2093,7 +2042,6 @@ function createFallingCylinder(pos) {
 
     scene.add(cylinder);
 
-    //Ammojs Section
     let transform = new Ammo.btTransform();
     transform.setIdentity();
     transform.setOrigin(new Ammo.btVector3(pos.x, pos.y, pos.z));
@@ -2113,7 +2061,6 @@ function createFallingCylinder(pos) {
     body.threeObject = cylinder;
 
     physicsWorld.addRigidBody(body);
-
 
     const startY = pos.y
     const tween1 = new TWEEN.Tween({ y: startY })
@@ -2152,32 +2099,26 @@ function createFallingCylinder(pos) {
     tween2.onUpdate(tweenUpdate)
     tween3.onUpdate(tweenUpdate)
 
-
 }
-
-
 
 function createGround(info) {
 
     let pos = info.pos;
-    let scale = info.scale; //prev 50, 2, 50
+    let scale = info.scale; 
     let quat = info.quat;
     let mass = 0;
 
-    //threeJS Section
-
-    let blockPlane = new THREE.Mesh(new THREE.BoxBufferGeometry(
+    let groundBlock = new THREE.Mesh(new THREE.BoxBufferGeometry(
         scale.x, scale.y, scale.z, 35, 35, 35), levelTextures.ground);
 
-    blockPlane.position.set(pos.x, pos.y, pos.z);
-    blockPlane.quaternion.set(quat.x, quat.y, quat.z, quat.w);
+    groundBlock.position.set(pos.x, pos.y, pos.z);
+    groundBlock.quaternion.set(quat.x, quat.y, quat.z, quat.w);
 
-    blockPlane.receiveShadow = true;
+    groundBlock.receiveShadow = true;
+    groundBlock.castShadow = true;
 
-    scene.add(blockPlane);
-
-
-    //Ammojs Section
+    scene.add(groundBlock);
+    
     let transform = new Ammo.btTransform();
     transform.setIdentity();
     transform.setOrigin(new Ammo.btVector3(pos.x, pos.y, pos.z));
@@ -2192,56 +2133,13 @@ function createGround(info) {
 
     let rbInfo = new Ammo.btRigidBodyConstructionInfo(mass, motionState, colShape, localInertia);
     let body = new Ammo.btRigidBody(rbInfo);
-    blockPlane.userData.tag = "ground";
+    groundBlock.userData.tag = "ground";
 
-    body.threeObject = blockPlane;
-
-    physicsWorld.addRigidBody(body);
-
-
-    return blockPlane
-}
-
-
-function createBlock(pos) {
-
-    let scale = { x: 15, y: 2, z: 15 }; //prev 50, 2, 50
-    let quat = { x: 0, y: 0, z: 0, w: 1 };
-    let mass = 0;
-
-    //threeJS Section //0xa0afa4
-
-    let blockPlane = new THREE.Mesh(new THREE.BoxBufferGeometry(), levelTextures.ground);
-
-    blockPlane.position.set(pos.x, pos.y, pos.z);
-    blockPlane.scale.set(scale.x, scale.y, scale.z);
-
-    blockPlane.castShadow = true;
-    blockPlane.receiveShadow = true;
-
-    scene.add(blockPlane);
-
-
-    //Ammojs Section
-    let transform = new Ammo.btTransform();
-    transform.setIdentity();
-    transform.setOrigin(new Ammo.btVector3(pos.x, pos.y, pos.z));
-    transform.setRotation(new Ammo.btQuaternion(quat.x, quat.y, quat.z, quat.w));
-    let motionState = new Ammo.btDefaultMotionState(transform);
-
-    let colShape = new Ammo.btBoxShape(new Ammo.btVector3(scale.x * 0.5, scale.y * 0.5, scale.z * 0.5));
-    colShape.setMargin(0.05);
-
-    let localInertia = new Ammo.btVector3(0, 0, 0);
-    colShape.calculateLocalInertia(mass, localInertia);
-
-    let rbInfo = new Ammo.btRigidBodyConstructionInfo(mass, motionState, colShape, localInertia);
-    let body = new Ammo.btRigidBody(rbInfo);
-    blockPlane.userData.tag = "ground";
-
-    body.threeObject = blockPlane;
+    body.threeObject = groundBlock;
 
     physicsWorld.addRigidBody(body);
+
+    return groundBlock
 }
 
 
@@ -2250,21 +2148,18 @@ function createMovingPlatform(pos) {
     let scale = { x: 12, y: 3, z: 12 }; //prev 50, 2, 50
     let quat = { x: 0, y: 0, z: 0, w: 1 };
     let mass = 0;
-
-    //threeJS Section
-    let blockPlane = new THREE.Mesh(new THREE.BoxBufferGeometry(),
+    
+    let platform = new THREE.Mesh(new THREE.BoxBufferGeometry(),
         new THREE.MeshPhongMaterial({ color: 0xDC143C }));
 
-    blockPlane.position.set(pos.x, pos.y, pos.z);
-    blockPlane.scale.set(scale.x, scale.y, scale.z);
+        platform.position.set(pos.x, pos.y, pos.z);
+        platform.scale.set(scale.x, scale.y, scale.z);
 
-    blockPlane.castShadow = true;
-    blockPlane.receiveShadow = true;
+        platform.castShadow = true;
+        platform.receiveShadow = true;
 
-    scene.add(blockPlane);
+    scene.add(platform);
 
-
-    //Ammojs Section
     let transform = new Ammo.btTransform();
     transform.setIdentity();
     transform.setOrigin(new Ammo.btVector3(pos.x, pos.y, pos.z));
@@ -2279,10 +2174,10 @@ function createMovingPlatform(pos) {
 
     let rbInfo = new Ammo.btRigidBodyConstructionInfo(mass, motionState, colShape, localInertia);
     let body = new Ammo.btRigidBody(rbInfo);
-    blockPlane.userData.tag = "movingPlatform";
-    blockPlane.userData.playerGrounded = false;
+    platform.userData.tag = "movingPlatform";
+    platform.userData.playerGrounded = false;
 
-    body.threeObject = blockPlane;
+    body.threeObject = platform;
 
     physicsWorld.addRigidBody(body);
 
@@ -2313,11 +2208,10 @@ function createMovingPlatform(pos) {
 
         body.setMotionState(motionState)
 
-        blockPlane.position.set(pos.x, object.y, pos.z)
-
+        platform.position.set(pos.x, object.y, pos.z)
 
         if (!isGrounded) {
-            blockPlane.userData.playerGrounded = false;
+            platform.userData.playerGrounded = false;
             playerController.threeCrash.userData.physicsBody.setFriction(0)
         }
 
@@ -2327,7 +2221,6 @@ function createMovingPlatform(pos) {
     tween2.onUpdate(tweenUpdate)
 
     tween1.start()
-
 }
 
 
@@ -2377,7 +2270,6 @@ function updateCamera() {
     const camera = scene.getObjectByName("playerCamera")
     const player = scene.getObjectByName("player")
 
-
     const curvePos = getCurvePosAtPlayer(player)
 
     if (player.position.y < 150) {
@@ -2399,7 +2291,6 @@ class CollisionManager {
     static setupContactResultCallback() {
 
         cbContactResult = new Ammo.ConcreteContactResultCallback();
-
         cbContactResult.addSingleResult = function (cp, colObj0Wrap, partId0, index0, colObj1Wrap, partId1, index1) {
 
             let contactPoint = Ammo.wrapPointer(cp, Ammo.btManifoldPoint);
@@ -2414,11 +2305,8 @@ class CollisionManager {
             let rb1 = Ammo.castObject(colWrapper1.getCollisionObject(), Ammo.btRigidBody);
 
             let threeObject0 = rb0.threeObject;
-
             let threeObject1 = rb1.threeObject;
-
             let tag, localPos, worldPos
-
 
             if (threeObject1 != null) {
                 if (threeObject0.userData.tag != "player") {
@@ -2468,8 +2356,7 @@ class CollisionManager {
                             return
                         }
 
-                        if ((localPos.y() < -3.5) || isSpinning || isSliding) 
-                        {
+                        if ((localPos.y() < -3.5) || isSpinning || isSliding) {
                             CrateManager.break(scene, threeObject1)
                         }
 
@@ -2497,11 +2384,9 @@ class CollisionManager {
 }
 
 
-
 let isGrounded = true;
 let canJump = true;
 let onTimeout = false;
-
 let cameraOrtho;
 
 
@@ -2545,8 +2430,6 @@ function handleInput(inputCode, inputKeys) {
         else if (inputCode.code === "KeyC") {
             crateEditor()
         }
-
-
     }
 
     else if (inputCode.type === "keyup") {
